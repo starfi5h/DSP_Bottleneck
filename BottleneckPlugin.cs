@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using BepInEx;
 using BepInEx.Bootstrap;
+using Bottleneck.Nebula;
 using Bottleneck.Stats;
 using Bottleneck.UI;
 using Bottleneck.Util;
@@ -12,8 +13,10 @@ using UnityEngine.UI;
 namespace Bottleneck
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
+    [BepInDependency("dsp.nebula-multiplayer-api", BepInDependency.DependencyFlags.SoftDependency)]
     public class BottleneckPlugin : BaseUnityPlugin
     {
+        public static BottleneckPlugin Instance => _instance;
         private Harmony _harmony;
         private static BottleneckPlugin _instance;
         private GameObject _enablePrecursorGO;
@@ -49,6 +52,12 @@ namespace Bottleneck
             _harmony.PatchAll(typeof(BottleneckPlugin));
             PluginConfig.InitConfig(Config);
             Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} {PluginInfo.PLUGIN_VERSION} is loaded!");
+
+            if (Chainloader.PluginInfos.ContainsKey("dsp.nebula-multiplayer-api"))
+            {
+                NebulaCompat.Init(_harmony);
+            }
+
         }
 
         private void ConditionallyLoadStats()
@@ -101,7 +110,7 @@ namespace Bottleneck
             {
                 var task = _pendingDeficitTask;
                 _pendingDeficitTask = null;
-                Log.Debug($"Processing deficit task, age: {DateTime.Now - task.createdAt}");
+                //Log.Debug($"Processing deficit task, age: {DateTime.Now - task.createdAt}");
                 ProcessDeficitTask(task);
                 _deficitComputedSinceOpen = true;
             }
@@ -136,6 +145,12 @@ namespace Bottleneck
                 return;
             }
 
+            if (NebulaCompat.IsClient && uiStatsWindow.astroFilter != 0)
+            {
+                NebulaCompat.SendRequest(ERequest.Bottleneck);
+                return;
+            }
+
             ProductionDeficit.Clear();
             if (_betterStatsObj != null)
             {
@@ -152,7 +167,10 @@ namespace Bottleneck
             }
             else if (uiStatsWindow.astroFilter == 0)
             {
-                AddPlanetFactoryData(uiStatsWindow.gameData.localPlanet.factory, false);
+                if (uiStatsWindow.gameData.localPlanet.factory != null)
+                {
+                    AddPlanetFactoryData(uiStatsWindow.gameData.localPlanet.factory, false);
+                }
             }
             else if (uiStatsWindow.astroFilter % 100 > 0)
             {
@@ -205,6 +223,9 @@ namespace Bottleneck
             {
                 Destroy(_betterStatsObj);
             }
+
+            NebulaCompat.OnDestroy();
+
         }
 
         private void Clear()
