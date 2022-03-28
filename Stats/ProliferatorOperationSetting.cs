@@ -125,7 +125,7 @@ namespace Bottleneck.Stats
             setting.Mode = ItemCalculationMode.ForceProductivity;
             SyncButtons();
             if (NebulaCompat.IsClient)
-                NebulaCompat.SendRequest(ERequest.BetterStats, true);
+                NebulaCompat.SendRequest(ERequest.BetterStats);
         }
 
         private void OnForceSpeedClicked(int itemId)
@@ -137,7 +137,7 @@ namespace Bottleneck.Stats
 
             SyncButtons();
             if (NebulaCompat.IsClient)
-                NebulaCompat.SendRequest(ERequest.BetterStats, true);
+                NebulaCompat.SendRequest(ERequest.BetterStats);
         }
 
         private void OnNormalClicked(int itemId)
@@ -146,7 +146,7 @@ namespace Bottleneck.Stats
             setting.Mode = ItemCalculationMode.Normal;
             SyncButtons();
             if (NebulaCompat.IsClient)
-                NebulaCompat.SendRequest(ERequest.BetterStats, true);
+                NebulaCompat.SendRequest(ERequest.BetterStats);
         }
 
         private void OnModeDisable(int itemId)
@@ -161,7 +161,7 @@ namespace Bottleneck.Stats
 
             SyncButtons();
             if (NebulaCompat.IsClient)
-                NebulaCompat.SendRequest(ERequest.BetterStats, true);
+                NebulaCompat.SendRequest(ERequest.BetterStats);
         }
 
         private void SyncButtons()

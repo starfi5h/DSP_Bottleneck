@@ -12,8 +12,7 @@ namespace Bottleneck.Nebula
     {
         public static bool IsMultiplayerActive { get; private set; }
         public static bool IsClient { get; private set; }
-
-        private static int _astroFilter;
+        public static int LastAstroFilter { get; private set; }
 
         public static void Init(Harmony harmony)
         {
@@ -58,22 +57,26 @@ namespace Bottleneck.Nebula
             IsClient = false;
         }
 
-        public static void SendRequest(ERequest request, bool update = false)
+        public static void SendRequest(ERequest request)
         {
             int astroFilter = UIRoot.instance.uiGame.statWindow.astroFilter;
-            if (_astroFilter != astroFilter || update)
-            {
-                Log.Info($"{astroFilter} {update}");
-                NebulaModAPI.MultiplayerSession.Network.SendPacket(new Bottleneck_Request(request, astroFilter));
-                _astroFilter = astroFilter;
-            }
+            NebulaModAPI.MultiplayerSession.Network.SendPacket(new Bottleneck_Request(request, astroFilter));
+            Log.Debug($"{request} {astroFilter}");
+            LastAstroFilter = astroFilter;
+        }
+
+        public static void SendEntryRequest(int productId, bool isPrecursor)
+        {
+            NebulaModAPI.MultiplayerSession.Network.SendPacket(new Bottleneck_EntryRequest(productId, isPrecursor));
+            Log.Debug($"{productId} {isPrecursor}");
         }
     }
 
     public enum ERequest
     {
         BetterStats,
-        Bottleneck
+        Bottleneck,
+        Open
     }
 
     internal class Bottleneck_Request
@@ -102,8 +105,6 @@ namespace Bottleneck.Nebula
         public float[] Consumptions { get; set; }
         public int[] Producers { get; set; }
         public int[] Consumers { get; set; }
-
-
 
         public Bottleneck_Respone1() { }
         public Bottleneck_Respone1(int astroFilter, in Dictionary<int, BetterStats.ProductMetrics> counters)
@@ -150,6 +151,10 @@ namespace Bottleneck.Nebula
                 ComputeDisplayEntries((x) => BottleneckPlugin.Instance.AddPlanetFactoryData(x, false), packet.AstroFilter);
                 if (BetterStats.counter.Count > 0)
                     conn.SendPacket(new Bottleneck_Respone1(packet.AstroFilter, BetterStats.counter));
+            }
+            else if (packet.Reqest == ERequest.Open)
+            {
+                BottleneckPlugin.Instance.ProcessMadeOnTask();
             }
             BetterStats.counter = tmp;
             ItemCalculationRuntimeSetting.InputModes(productIds, modes);
@@ -200,4 +205,76 @@ namespace Bottleneck.Nebula
             }
         }
     }
+
+    internal class Bottleneck_EntryRequest
+    {
+        public int ItemId { get; set; }
+        public bool IsPrecursor { get; set; }
+
+        public Bottleneck_EntryRequest() { }
+        public Bottleneck_EntryRequest(int itmeId, bool isPrecursor)
+        {
+            ItemId = itmeId;
+            IsPrecursor = isPrecursor;
+        }
+    }
+
+    internal class Bottleneck_EntryRespone
+    {
+        public int ItemId { get; set; }
+        public bool IsPrecursor { get; set; }
+        public string TipTitle { get; set; }
+        public string TipText { get; set; }
+
+        public Bottleneck_EntryRespone() { }
+        public Bottleneck_EntryRespone(int itemId, bool isPrecursor, string tipTitle, string tipText)
+        {
+            ItemId = itemId;
+            IsPrecursor = isPrecursor;
+            TipTitle = tipTitle;
+            TipText = tipText;
+        }
+    }
+
+    [RegisterPacketProcessor]
+    internal class Bottleneck_EntryRequestProcessor : BasePacketProcessor<Bottleneck_EntryRequest>
+    {
+        public override void ProcessPacket(Bottleneck_EntryRequest packet, INebulaConnection conn)
+        {
+            string tipTtile, tipText;
+            if (packet.IsPrecursor)
+                BottleneckPlugin.Instance.GetPrecursorButtonTip(packet.ItemId, out tipTtile, out tipText);
+            else
+                BottleneckPlugin.Instance.GetSuccessorButtonTip(packet.ItemId, out tipTtile, out tipText);
+
+            conn.SendPacket(new Bottleneck_EntryRespone(packet.ItemId, packet.IsPrecursor, tipTtile, tipText));
+        }
+    }
+
+    [RegisterPacketProcessor]
+    internal class Bottleneck_EntryResponeProcessor : BasePacketProcessor<Bottleneck_EntryRespone>
+    {
+        public override void ProcessPacket(Bottleneck_EntryRespone packet, INebulaConnection conn)
+        {
+            for (int i = 0; i < UIRoot.instance.uiGame.statWindow.entriesLen; i++)
+            {
+                var entry = UIRoot.instance.uiGame.statWindow.entries[i];
+                if (entry?.entryData != null && entry.entryData.itemId == packet.ItemId)
+                {
+                    var elt = BottleneckPlugin.Instance.GetEnhanceElement(entry);
+                    if (packet.IsPrecursor)
+                    {
+                        elt.precursorButton.tips.tipTitle = packet.TipTitle;
+                        elt.precursorButton.tips.tipText = packet.TipText;
+                    }
+                    else
+                    {
+                        elt.successorButton.tips.tipTitle = packet.TipTitle;
+                        elt.successorButton.tips.tipText = packet.TipText;
+                    }
+                }
+            }
+        }
+    }
+
 }

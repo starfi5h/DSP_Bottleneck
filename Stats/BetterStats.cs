@@ -567,7 +567,8 @@ namespace Bottleneck.Stats
 
             if (NebulaCompat.IsClient && __instance.astroFilter != 0)
             {
-                NebulaCompat.SendRequest(ERequest.BetterStats);
+                if (__instance.astroFilter != NebulaCompat.LastAstroFilter)
+                    NebulaCompat.SendRequest(ERequest.BetterStats);
                 return;
             }
 
