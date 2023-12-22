@@ -298,8 +298,7 @@ namespace Bottleneck
                     var planetData = GameMain.data.galaxy.PlanetById(astroId);
                     if (planetData != null)
                     {
-                        var locationSummary = _instance._productionLocations[_instance._targetItemId];
-                        if (locationSummary != null)
+                        if (_instance._productionLocations.TryGetValue(_instance._targetItemId, out var locationSummary))
                         {
                             if ((_successor && locationSummary.IsConsumerPlanet(planetData.displayName))
                                 || (!_successor && locationSummary.IsProducerPlanet(planetData.displayName)))
