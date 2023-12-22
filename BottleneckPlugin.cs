@@ -56,7 +56,7 @@ namespace Bottleneck
             PluginConfig.InitConfig(Config);
             Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} {PluginInfo.PLUGIN_VERSION} is loaded!");
 
-            if (Chainloader.PluginInfos.ContainsKey("dsp.nebula-multiplayer-api"))
+            if (Chainloader.PluginInfos.ContainsKey("dsp.nebula-multiplayer"))
             {
                 NebulaCompat.Init(_harmony);
             }
@@ -196,6 +196,7 @@ namespace Bottleneck
             }
         }
 
+#if DEBUG
         internal void OnDestroy()
         {
             // For ScriptEngine hot-reloading
@@ -231,6 +232,7 @@ namespace Bottleneck
 
             NebulaCompat.OnDestroy();
         }
+#endif
 
         private void Clear()
         {

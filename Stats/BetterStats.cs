@@ -569,10 +569,10 @@ namespace Bottleneck.Stats
                 producers = productMetrics.producers.ToString();
                 consumers = productMetrics.consumers.ToString();
 
-                if (originalConsumeValue >= (maxProductValue * PluginConfig.lackOfProductionRatioTrigger.Value))
+                if (originalConsumeValue > (maxProductValue * PluginConfig.lackOfProductionRatioTrigger.Value))
                     alertOnLackOfProduction = true;
 
-                if (maxConsumeValue >= (maxProductValue * PluginConfig.consumptionToProductionRatioTrigger.Value))
+                if (maxConsumeValue > (maxProductValue * PluginConfig.consumptionToProductionRatioTrigger.Value))
                     warnOnHighMaxConsumption = true;
             }
 

@@ -34,7 +34,7 @@ namespace Bottleneck
                 "When precursor/consumer filter is active filter planet list to only ones that produce/consume selected item");            
             systemFilter = confFile.Bind("General", "System Filter", true,
                 "When planet filter is active include star systems item in list (requires Planet Filter enabled)");            
-            lackOfProductionRatioTrigger = confFile.Bind("General", "lackOfProductionRatio", 0.9f, //
+            lackOfProductionRatioTrigger = confFile.Bind("General", "lackOfProductionRatio", 1.0f, //
                 "When consumption rises above the given ratio of max production, flag the text in red." +//
                 " (e.g. if set to '0.9' then you will be warned if you consume more than 90% of your max production)");
             consumptionToProductionRatioTrigger = confFile.Bind("General", "consumptionToProductionRatio", 1.5f, //
