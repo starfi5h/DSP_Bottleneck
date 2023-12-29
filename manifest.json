@@ -1,7 +1,7 @@
 {
     "name":  "Bottleneck",
-    "version_number":  "1.0.16",
-    "website_url":  "https://github.com/mattsemar/dsp-bottleneck",
-    "description":  "Add more information to the production stats panel. (theoretical max, filters, production/consumption planet list) 为统计面板（P）增加更多显示信息，包括生产/消耗设施数量以及理论值",
+    "version_number":  "1.0.17",
+    "website_url":  "https://github.com/starfi5h/DSP_Bottleneck",
+    "description":  "Add more information to the production stats panel. (theoretical max, filters, production/consumption planet list) 为统计面板(P)增加更多显示信息，包括最大理论值及产物筛选等",
     "dependencies":  ["xiaoye97-BepInEx-5.4.17"]
 }

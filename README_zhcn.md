@@ -8,7 +8,7 @@
 
 ## 带有增产剂计算的 BetterStats
 
-这个插件包含了一个支持增产剂计算的 BetterStats 分支。要使用它，您必须禁用 BetterStats 插件。
+这个插件包含了一个支持增产剂计算的 BetterStats 分支。
 分叉的 BetterStats 是完全可选的，安装 BetterStats 后，Bottleneck 插件应该可以正常工作，不会出现增产剂计算的增强功能。
 
 对于可以喷涂增产剂的生产项目，在每个项目旁边添加了按钮，您可以在其中进行选择：

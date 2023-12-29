@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.0.17
+* Update: Fix for game version 0.10.28.21150  
+
 ### v1.0.16 
 * Update: Support for DSP Dark Fog update. (0.10.28.21014) 
 * Bugfix: Fix production rate is not precise when displayed in per second. 
