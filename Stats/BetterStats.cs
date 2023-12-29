@@ -466,7 +466,7 @@ namespace Bottleneck.Stats
                     filterStr = value;
                 }
 
-                __instance.ComputeDisplayEntries();
+                __instance.ComputeDisplayProductEntries();
             });
             // taken from thecodershome's PR on github: https://github.com/DysonSphereMod/QOL/pull/128
             _inputField.onEndEdit.AddListener(value =>
@@ -596,7 +596,7 @@ namespace Bottleneck.Stats
             enhancement.proliferatorOperationSetting?.UpdateItemId(__instance.entryData.itemId);
         }
 
-        public static void UIProductionStatWindow_ComputeDisplayEntries_Prefix(UIStatisticsWindow __instance)
+        public static void UIProductionStatWindow_ComputeDisplayProductEntries_Prefix(UIStatisticsWindow __instance)
         {
             if (Time.frameCount % 10 != 0 && lastStatTimer == __instance.timeLevel)
             {

@@ -407,13 +407,13 @@ namespace Bottleneck
             }
         }
 
-        [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), "ComputeDisplayEntries")]
+        [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow.ComputeDisplayProductEntries))]
         public static void UIProductionStatWindow_ComputeDisplayEntries_Prefix(UIStatisticsWindow __instance)
         {
             if (_instance == null || __instance == null)
                 return;
             if (_instance._betterStatsObj != null && PluginConfig.statsOnly.Value)
-                BetterStats.UIProductionStatWindow_ComputeDisplayEntries_Prefix(__instance);
+                BetterStats.UIProductionStatWindow_ComputeDisplayProductEntries_Prefix(__instance);
             else
             {
                 _instance.RecordEntryData(__instance);
