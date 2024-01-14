@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.0.18
+* Add: config `Overwrite Stacking Level`, `Overwrite Proliferator Level`
+
 ### v1.0.17
 * Update: Fix for game version 0.10.28.21150  
 
