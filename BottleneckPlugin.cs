@@ -53,6 +53,7 @@ namespace Bottleneck
             _harmony = new Harmony(PluginInfo.PLUGIN_GUID);
             _harmony.PatchAll(typeof(BottleneckPlugin));
             _harmony.PatchAll(typeof(Strings));
+            _harmony.PatchAll(typeof(ResearchTechHelper));
             PluginConfig.InitConfig(Config);
             Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} {PluginInfo.PLUGIN_VERSION} is loaded!");
 

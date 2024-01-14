@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using BepInEx.Configuration;
+﻿using BepInEx.Configuration;
 
 namespace Bottleneck
 {
@@ -11,13 +9,14 @@ namespace Bottleneck
         public static ConfigEntry<float> lackOfProductionRatioTrigger;
         public static ConfigEntry<float> consumptionToProductionRatioTrigger;
         public static ConfigEntry<bool> displayPerSecond;
-        public static ConfigEntry<bool> disableProliferatorCalc;
-        public static ConfigEntry<bool> disableStackingCalc;
         public static ConfigEntry<bool> statsOnly;
         public static ConfigEntry<bool> planetFilter;
         public static ConfigEntry<bool> systemFilter;
         public static ConfigEntry<bool> includeSecondLevelConsumerProducer;
         public static ConfigEntry<bool> disableItemHoverTip;
+        public static ConfigEntry<int> overwriteStackingLevel;
+        public static ConfigEntry<int> overwriteProliferatorLevel;
+        public static ConfigEntry<bool> disableProliferatorCalc; // To make it not break MMS compat
 
 
         public static void InitConfig(ConfigFile confFile)
@@ -42,12 +41,14 @@ namespace Bottleneck
                 " (e.g. if set to '1.5' then you will be warned if your max consumption is more than 150% of your max production)");
             displayPerSecond = confFile.Bind("General", "displayPerSecond", false,
                 "Used by UI to persist the last selected value for checkbox");
-            disableProliferatorCalc = confFile.Bind("General", "Disable Proliferator Calculation", false,
-                "Tells mod to ignore proliferator points completely. Can cause production rates to exceed theoretical max values");
-            disableStackingCalc = confFile.Bind("General", "Disable Stacking Calculation", false,
-                "Tells mod to ignore unlocked tech for stacking items on belts. By default uses same 'Tech Limit' value as stations use");
             statsOnly = confFile.Bind("Stats", "Disable Bottleneck", false,
                 "Disable Bottleneck functionality, use only BetterStats features");
+            overwriteStackingLevel = confFile.Bind("Stats", "Overwrite Stacking Level", -1,
+                "Overwrite the maximum cargo stacking level. By default it uses the vanilla limit (4)");
+            overwriteProliferatorLevel = confFile.Bind("Stats", "Overwrite Proliferator Level", -1,
+                "Overwrite the maximum proliferator level. By default it uses the highest proliferator unlocked");
+            disableProliferatorCalc = confFile.Bind("Stats", "Disable Proliferator Calculation", false,
+                "Tells mod to ignore proliferator points completely. Can cause production rates to exceed theoretical max values");
         }
     }
 }
