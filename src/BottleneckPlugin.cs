@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Bootstrap;
 using Bottleneck.Nebula;
@@ -43,6 +44,7 @@ namespace Bottleneck
 
         public bool IsFactoryDataDirty { get; set; }
         private int lastAstroFilter;
+        private bool isCalculating;
 
         private void Awake()
         {
@@ -72,6 +74,7 @@ namespace Bottleneck
                 AddPlanetFactoryData(GameMain.data.factories[i], true);
             }
             _enableMadeOn = true;
+            isCalculating = false;
         }
 
         private void ProcessDeficitTask()
@@ -122,6 +125,7 @@ namespace Bottleneck
                     }
                 }
             }
+            isCalculating = false;
         }
 
 #if DEBUG
@@ -273,6 +277,7 @@ namespace Bottleneck
             if (_instance != null && _instance != null && _instance.gameObject != null && !PluginConfig.statsOnly.Value)
             {
                 _instance.AddEnablePrecursorFilterButton(__instance);
+                _instance._enableMadeOn = false;
                 _instance.IsFactoryDataDirty = true;
                 if (NebulaCompat.IsClient)
                     NebulaCompat.SendRequest(ERequest.Open);
@@ -351,18 +356,21 @@ namespace Bottleneck
         private void RecordEntryData(UIStatisticsWindow uiStatsWindow)
         {
             //bool planetUsageMode = Time.frameCount % 500 == 0;
+            if (isCalculating) return;
 
             if (!_enableMadeOn)
             {
                 // Update when stat window open
-                ProcessMadeOnTask();
+                isCalculating = true;
+                Task.Run(ProcessMadeOnTask);
             }
-            if (IsFactoryDataDirty || uiStatsWindow.astroFilter != lastAstroFilter)
+            else if (IsFactoryDataDirty || uiStatsWindow.astroFilter != lastAstroFilter)
             {
                 // Update when settings or filter change
+                isCalculating = true;
                 lastAstroFilter = uiStatsWindow.astroFilter;
                 IsFactoryDataDirty = false;
-                ProcessDeficitTask();
+                Task.Run(ProcessDeficitTask);
             }
         }
 
@@ -423,7 +431,7 @@ namespace Bottleneck
                 }
                 else
                 {
-                    tipText = "Production planets not shown when single planet selected";
+                    tipText = "Calculating...";
                 }
 
                 var deficitItemName = ProductionDeficit.MostNeeded(productId);
