@@ -678,25 +678,25 @@ namespace Bottleneck.Stats
             int beltMaxStack = ResearchTechHelper.GetMaxPilerStackingUnlocked();
             for (int i = 1; i < factorySystem.minerCursor; i++)
             {
-                var miner = factorySystem.minerPool[i];
+                ref var miner = ref factorySystem.minerPool[i];
                 RecordMinerStats(factorySystem.minerPool[i].type, miner, veinPool, planetFactory.planet.waterItemId);
             }
 
             for (int i = 1; i < factorySystem.assemblerCursor; i++)
             {
-                var assembler = factorySystem.assemblerPool[i];
+                ref var assembler = ref factorySystem.assemblerPool[i];
                 RecordAssemblerStats(assembler, maxSpeedIncrease, maxProductivityIncrease);
             }
 
             for (int i = 1; i < factorySystem.fractionatorCursor; i++)
             {
-                var fractionator = factorySystem.fractionatorPool[i];
+                ref var fractionator = ref factorySystem.fractionatorPool[i];
                 RecordFractionatorStats(fractionator, maxSpeedIncrease, beltMaxStack);
             }
 
             for (int i = 1; i < factorySystem.ejectorCursor; i++)
             {
-                var ejector = factorySystem.ejectorPool[i];
+                ref var ejector = ref factorySystem.ejectorPool[i];
                 if (ejector.id != i) continue;
 
                 RecordEjectorStats(ejector);
@@ -704,7 +704,7 @@ namespace Bottleneck.Stats
 
             for (int i = 1; i < factorySystem.siloCursor; i++)
             {
-                var silo = factorySystem.siloPool[i];
+                ref var silo = ref factorySystem.siloPool[i];
                 if (silo.id != i) continue;
 
                 RecordSiloStats(silo);
@@ -712,7 +712,7 @@ namespace Bottleneck.Stats
 
             for (int i = 1; i < factorySystem.labCursor; i++)
             {
-                var lab = factorySystem.labPool[i];
+                ref var lab = ref factorySystem.labPool[i];
                 if (lab.id != i) continue;
                 RecordLabStats(lab, maxSpeedIncrease, maxProductivityIncrease);
             }
@@ -727,7 +727,7 @@ namespace Bottleneck.Stats
 
             for (int i = 1; i < planetFactory.powerSystem.genCursor; i++)
             {
-                var generator = planetFactory.powerSystem.genPool[i];
+                ref var generator = ref planetFactory.powerSystem.genPool[i];
                 if (generator.id != i)
                 {
                     continue;
@@ -744,7 +744,7 @@ namespace Bottleneck.Stats
             var cargoTraffic = planetFactory.cargoTraffic;
             for (int i = 0; i < planetFactory.cargoTraffic.spraycoaterCursor; i++)
             {
-                var sprayCoater = cargoTraffic.spraycoaterPool[i];
+                ref var sprayCoater = ref cargoTraffic.spraycoaterPool[i];
                 if (sprayCoater.id != i || sprayCoater.incItemId < 1)
                     continue;
                 ItemProto itemProto = LDB.items.Select(sprayCoater.incItemId);
@@ -769,9 +769,9 @@ namespace Bottleneck.Stats
             }
         }
 
-        public static void RecordLabStats(LabComponent lab, float maxSpeedIncrease, float maxProductivityIncrease)
+        public static void RecordLabStats(in LabComponent lab, float maxSpeedIncrease, float maxProductivityIncrease)
         {
-            (float baseFrequency, float productionFrequency) = DetermineLabFrequencies(ref lab, maxProductivityIncrease, maxSpeedIncrease);
+            (float baseFrequency, float productionFrequency) = DetermineLabFrequencies(in lab, maxProductivityIncrease, maxSpeedIncrease);
 
             if (lab.matrixMode)
             {
@@ -815,7 +815,7 @@ namespace Bottleneck.Stats
             }
         }
 
-        public static void RecordSiloStats(SiloComponent silo)
+        public static void RecordSiloStats(in SiloComponent silo)
         {
             EnsureId(ref counter, silo.bulletId);
 
@@ -823,7 +823,7 @@ namespace Bottleneck.Stats
             counter[silo.bulletId].consumers++;
         }
 
-        public static void RecordEjectorStats(EjectorComponent ejector)
+        public static void RecordEjectorStats(in EjectorComponent ejector)
         {
             EnsureId(ref counter, ejector.bulletId);
 
@@ -831,7 +831,7 @@ namespace Bottleneck.Stats
             counter[ejector.bulletId].consumers++;
         }
 
-        public static void RecordOrbitalCollectorStats(StationComponent station, double gasTotalHeat, double collectorsWorkCost)
+        public static void RecordOrbitalCollectorStats(in StationComponent station, double gasTotalHeat, double collectorsWorkCost)
         {
             if (station == null || station.id < 1 || !station.isCollector) return;
             var miningSpeedScale = (double)GameMain.history.miningSpeedScale;
@@ -849,7 +849,7 @@ namespace Bottleneck.Stats
             }
         }
 
-        public static void RecordFractionatorStats(FractionatorComponent fractionator, float maxSpeedIncrease, int beltMaxStack)
+        public static void RecordFractionatorStats(in FractionatorComponent fractionator, float maxSpeedIncrease, int beltMaxStack)
         {
             if (fractionator.id < 1) return;
             var speed = 30f;
@@ -884,7 +884,7 @@ namespace Bottleneck.Stats
             }
         }
 
-        public static void RecordAssemblerStats(AssemblerComponent assembler, float maxSpeedIncrease, float maxProductivityIncrease)
+        public static void RecordAssemblerStats(in AssemblerComponent assembler, float maxSpeedIncrease, float maxProductivityIncrease)
         {
             if (assembler.id < 1 || assembler.recipeId == 0)
                 return;
@@ -936,7 +936,7 @@ namespace Bottleneck.Stats
             }
         }
 
-        public static void RecordGeneratorStats(PowerGeneratorComponent generator)
+        public static void RecordGeneratorStats(in PowerGeneratorComponent generator)
         {
             var isFuelConsumer = generator.fuelHeat > 0 && generator.fuelId > 0 && generator.productId == 0;
             if ((generator.productId == 0 || generator.productHeat == 0) && !isFuelConsumer)
@@ -970,7 +970,7 @@ namespace Bottleneck.Stats
             }
         }
 
-        public static void RecordMinerStats(EMinerType minerType, MinerComponent miner, VeinData[] veinPool, int waterItemId)
+        public static void RecordMinerStats(EMinerType minerType, in MinerComponent miner, VeinData[] veinPool, int waterItemId)
         {
             if (miner.id < 1) return;
             var miningSpeedScale = (double)GameMain.history.miningSpeedScale;
@@ -1015,7 +1015,7 @@ namespace Bottleneck.Stats
             counter[productId].producers++;
         }
 
-        private static (float, float) DetermineLabFrequencies(ref LabComponent lab, float maxProductivityIncrease, float maxSpeedIncrease)
+        private static (float, float) DetermineLabFrequencies(in LabComponent lab, float maxProductivityIncrease, float maxSpeedIncrease)
         {
             // lab timeSpend is in game ticks, here we are figuring out the same number shown in lab window, example: 2.5 / m
             // when we are in Production Speedup mode `speedOverride` is increased.

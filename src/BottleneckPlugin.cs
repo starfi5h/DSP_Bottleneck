@@ -683,7 +683,7 @@ namespace Bottleneck
             var veinPool = planetFactory.planet.factory.veinPool;
             for (int i = 1; i < factorySystem.minerCursor; i++)
             {
-                var miner = factorySystem.minerPool[i];
+                ref var miner = ref factorySystem.minerPool[i];
                 if (i != miner.id) continue;
                 if (_betterStatsObj != null && !planetUsage)
                     BetterStats.RecordMinerStats(miner.type, miner, veinPool, planetFactory.planet.waterItemId);
@@ -710,7 +710,7 @@ namespace Bottleneck
 
             for (int i = 1; i < factorySystem.assemblerCursor; i++)
             {
-                var assembler = factorySystem.assemblerPool[i];
+                ref var assembler = ref factorySystem.assemblerPool[i];
                 if (assembler.id != i || assembler.recipeId == 0) continue;
 
                 if (planetUsage)
@@ -734,7 +734,7 @@ namespace Bottleneck
 
             for (int i = 1; i < factorySystem.fractionatorCursor; i++)
             {
-                var fractionator = factorySystem.fractionatorPool[i];
+                ref var fractionator = ref factorySystem .fractionatorPool[i];
                 if (fractionator.id != i) continue;
                 if (_betterStatsObj != null && !planetUsage)
                     BetterStats.RecordFractionatorStats(fractionator, maxSpeedIncrease, beltMaxStack);
@@ -756,7 +756,7 @@ namespace Bottleneck
 
             for (int i = 1; i < factorySystem.ejectorCursor; i++)
             {
-                var ejector = factorySystem.ejectorPool[i];
+                ref var ejector = ref factorySystem.ejectorPool[i];
                 if (ejector.id != i) continue;
                 if (_betterStatsObj != null && !planetUsage)
                 {
@@ -770,7 +770,7 @@ namespace Bottleneck
 
             for (int i = 1; i < factorySystem.siloCursor; i++)
             {
-                var silo = factorySystem.siloPool[i];
+                ref var silo = ref factorySystem .siloPool[i];
                 if (silo.id != i) continue;
                 if (_betterStatsObj != null && !planetUsage)
                     BetterStats.RecordSiloStats(silo);
@@ -781,7 +781,7 @@ namespace Bottleneck
 
             for (int i = 1; i < factorySystem.labCursor; i++)
             {
-                var lab = factorySystem.labPool[i];
+                ref var lab = ref factorySystem.labPool[i];
                 if (lab.id != i) continue;
                 if (!planetUsage && _betterStatsObj != null)
                 {
@@ -865,6 +865,16 @@ namespace Bottleneck
             if (!planetUsage && _betterStatsObj != null)
             {
                 BetterStats.RecordSprayCoaterStats(planetFactory);
+            }
+            else if (planetUsage)
+            {
+                for (int i = 1; i < planetFactory.cargoTraffic.spraycoaterCursor; i++)
+                {
+                    ref var sprayCoater = ref planetFactory.cargoTraffic.spraycoaterPool[i];
+                    if (sprayCoater.id != i || sprayCoater.incItemId < 1)
+                        continue;
+                    AddPlanetaryUsage(sprayCoater.incItemId, planetFactory.planet, true);
+                }
             }
         }
 
