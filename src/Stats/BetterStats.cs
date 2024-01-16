@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using BepInEx.Logging;
 using Bottleneck.Nebula;
 using Bottleneck.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+
+#pragma warning disable IDE0017
 
 // Adapted from https://github.com/DysonSphereMod/QOL/blob/master/BetterStats/BetterStats.cs
 namespace Bottleneck.Stats
@@ -32,15 +33,15 @@ namespace Bottleneck.Stats
             public Text counterConsumptionValue;
             public ProliferatorOperationSetting proliferatorOperationSetting;
             public EventTrigger trigger;
-            public UIProductEntry productEntry { get; set; }
+            public UIProductEntry ProductEntry { get; set; }
 
             public UIItemTip tip;
 
-            public void OnMouseOverItem(BaseEventData arg)
+            public void OnMouseOverItem(BaseEventData _)
             {
                 if (PluginConfig.disableItemHoverTip.Value)
                     return;
-                if (productEntry == null)
+                if (ProductEntry == null)
                     return;
                 if (tip != null)
                 {
@@ -58,12 +59,12 @@ namespace Bottleneck.Stats
 
                 // corner=9 is ABOVE_RIGHT (relative position of numpad)
                 tip = UIItemTip.Create(itemId, 9, Vector2.zero, 
-                    productEntry.itemIcon.transform,
+                    ProductEntry.itemIcon.transform,
                     0, 0, UIButton.ItemTipType.Other);
                 tipItemId = itemId;
             }
 
-            public void OnMouseOffItem(BaseEventData arg)
+            public void OnMouseOffItem(BaseEventData _)
             {
                 if (tip != null)
                 {
@@ -76,8 +77,8 @@ namespace Bottleneck.Stats
 
         public static Dictionary<int, ProductMetrics> counter = new();
         private static GameObject txtGO, chxGO, filterGO;
-        private static Texture2D texOff = Resources.Load<Texture2D>("ui/textures/sprites/icons/checkbox-off");
-        private static Texture2D texOn = Resources.Load<Texture2D>("ui/textures/sprites/icons/checkbox-on");
+        private static readonly Texture2D texOff = Resources.Load<Texture2D>("ui/textures/sprites/icons/checkbox-off");
+        private static readonly Texture2D texOn = Resources.Load<Texture2D>("ui/textures/sprites/icons/checkbox-on");
         private static Sprite sprOn;
         private static Sprite sprOff;
         private static Image checkBoxImage;
@@ -91,9 +92,10 @@ namespace Bottleneck.Stats
         private const int margin = 10;
         private const int maxOffset = labelsWidth + margin;
 
-        private static int lastStatTimer;
+        private static int lastTimeLevel;
+        private static int lastAstroFilter;
 
-        private static Dictionary<UIProductEntry, EnhancedUIProductEntryElements> enhancements = new();
+        private static readonly Dictionary<UIProductEntry, EnhancedUIProductEntryElements> enhancements = new();
         private static UIStatisticsWindow statWindow;
         public static ManualLogSource Log;
 
@@ -315,7 +317,7 @@ namespace Bottleneck.Stats
                 counterConsumptionLabel = counterConsumptionLabel,
                 counterConsumptionValue = counterConsumptionValue,
                 proliferatorOperationSetting = proliferatorOpSetting,
-                productEntry = __instance,
+                ProductEntry = __instance,
             };
 
             __instance.itemIcon.raycastTarget = true;
@@ -324,12 +326,12 @@ namespace Bottleneck.Stats
             // // eventRectTrigger.anchoredPosition = __instance.itemIcon.transform.position;
             // // eventRectTrigger.sizeDelta = new Vector2(100, 100);
 
-            EventTrigger.Entry enter = new EventTrigger.Entry();
+            var enter = new EventTrigger.Entry();
             enter.eventID = EventTriggerType.PointerEnter;
             enter.callback.AddListener(enhancement.OnMouseOverItem);
             enhancement.trigger.triggers.Add(enter);
 
-            EventTrigger.Entry exit = new EventTrigger.Entry();
+            var exit = new EventTrigger.Entry();
             exit.eventID = EventTriggerType.PointerExit;
             exit.callback.AddListener(enhancement.OnMouseOffItem);
             enhancement.trigger.triggers.Add(exit);
@@ -337,6 +339,17 @@ namespace Bottleneck.Stats
             enhancements.Add(__instance, enhancement);
 
             return enhancement;
+        }
+
+        #region UI patches
+
+        public static void UIStatisticsWindow__OnClose_Postfix()
+        {
+            foreach (var element in enhancements.Values)
+            {
+                element.OnMouseOffItem(null);
+            }
+            lastTimeLevel = lastAstroFilter = -1;
         }
 
         public static void UIStatisticsWindow__OnOpen_Postfix(UIStatisticsWindow __instance)
@@ -418,7 +431,7 @@ namespace Bottleneck.Stats
             _image.transform.SetParent(rectFilter, false);
             _image.color = new Color(0f, 0f, 0f, 0.5f);
 
-            GameObject textContainer = new GameObject();
+            var textContainer = new GameObject();
             textContainer.name = "Text";
             textContainer.transform.SetParent(rectFilter, false);
             var _text = textContainer.AddComponent<Text>();
@@ -431,7 +444,7 @@ namespace Bottleneck.Stats
             (_text.transform as RectTransform).sizeDelta = new Vector2(90, 30);
             (_text.transform as RectTransform).anchoredPosition = new Vector2(5, 0);
 
-            GameObject placeholderContainer = new GameObject();
+            var placeholderContainer = new GameObject();
             placeholderContainer.name = "Placeholder";
             placeholderContainer.transform.SetParent(rectFilter, false);
             var _placeholder = placeholderContainer.AddComponent<Text>();
@@ -502,8 +515,6 @@ namespace Bottleneck.Stats
             {
                 statWindow = __instance;
             }
-
-            lastStatTimer = __instance.timeLevel;
         }
 
         public static void UIProductEntry__OnUpdate_Postfix(UIProductEntry __instance)
@@ -596,12 +607,16 @@ namespace Bottleneck.Stats
             enhancement.proliferatorOperationSetting?.UpdateItemId(__instance.entryData.itemId);
         }
 
+        // statsOnly
         public static void UIProductionStatWindow_ComputeDisplayProductEntries_Prefix(UIStatisticsWindow __instance)
         {
-            if (Time.frameCount % 10 != 0 && lastStatTimer == __instance.timeLevel)
+            if (lastAstroFilter == __instance.lastAstroFilter && lastTimeLevel == __instance.timeLevel)
             {
+                // No need to refresh stat data if the filter condition is same
                 return;
             }
+            lastAstroFilter = __instance.lastAstroFilter;
+            lastTimeLevel = __instance.timeLevel;
 
             if (NebulaCompat.IsClient && __instance.astroFilter != 0)
             {
@@ -645,6 +660,10 @@ namespace Bottleneck.Stats
                 }
             }
         }
+
+        #endregion
+
+        #region Count & Theoretical max calculation
 
         // speed of fastest belt(mk3 belt) is 1800 items per minute
         public const float TICKS_PER_SEC = 60.0f;
@@ -700,9 +719,7 @@ namespace Bottleneck.Stats
             }
 
             double gasTotalHeat = planetFactory.planet.gasTotalHeat;
-#pragma warning disable Publicizer001
             var collectorsWorkCost = transport.collectorsWorkCost;
-#pragma warning restore Publicizer001
             for (int i = 1; i < transport.stationCursor; i++)
             {
                 var station = transport.stationPool[i];
@@ -814,7 +831,6 @@ namespace Bottleneck.Stats
             counter[ejector.bulletId].consumption += 60f / (ejector.chargeSpend + ejector.coldSpend) * 600000f;
             counter[ejector.bulletId].consumers++;
         }
-
 
         public static void RecordOrbitalCollectorStats(StationComponent station, double gasTotalHeat, double collectorsWorkCost)
         {
@@ -1048,12 +1064,6 @@ namespace Bottleneck.Stats
             return (baseFrequency, productionFrequency);
         }
 
-        public static void UIStatisticsWindow__OnClose_Postfix()
-        {
-            foreach (var element in enhancements.Values)
-            {
-                element.OnMouseOffItem(null);
-            }
-        }
+        #endregion
     }
 }
