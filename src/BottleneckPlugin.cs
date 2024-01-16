@@ -18,9 +18,9 @@ namespace Bottleneck
 
     public class BottleneckPlugin : BaseUnityPlugin
     {
-        public static BottleneckPlugin Instance => _instance;
+        public static BottleneckPlugin Instance => instance;
         private Harmony _harmony;
-        private static BottleneckPlugin _instance;
+        private static BottleneckPlugin instance;
         private GameObject _enablePrecursorGO;
         private Image _precursorCheckBoxImage;
         private static readonly Texture2D filterTexture = Resources.Load<Texture2D>("ui/textures/sprites/icons/filter-icon-16");
@@ -47,7 +47,7 @@ namespace Bottleneck
         private void Awake()
         {
             Log.logger = Logger;
-            _instance = this;
+            instance = this;
             _harmony = new Harmony(PluginInfo.PLUGIN_GUID);
             _harmony.PatchAll(typeof(BottleneckPlugin));
             _harmony.PatchAll(typeof(Strings));
@@ -84,10 +84,7 @@ namespace Bottleneck
             }
 
             ProductionDeficit.Clear();
-            if (_betterStatsObj != null)
-            {
-                BetterStats.counter.Clear();
-            }
+            BetterStats.counter.Clear();
 
             if (uiStatsWindow.astroFilter == -1)
             {
@@ -201,7 +198,7 @@ namespace Bottleneck
                 }
             }
 
-            if (_instance._itemFilter.Count == 0) return;
+            if (instance._itemFilter.Count == 0) return;
 
             var newItems = new List<string>();
             var newItemData = new List<int>();
@@ -228,7 +225,7 @@ namespace Bottleneck
                     var planetData = GameMain.data.galaxy.PlanetById(astroId);
                     if (planetData != null)
                     {
-                        if (_instance._productionLocations.TryGetValue(_instance._targetItemId, out var locationSummary))
+                        if (instance._productionLocations.TryGetValue(instance._targetItemId, out var locationSummary))
                         {
                             if ((_successor && locationSummary.IsConsumerPlanet(planetData.id))
                                 || (!_successor && locationSummary.IsProducerPlanet(planetData.id)))
@@ -260,21 +257,18 @@ namespace Bottleneck
         [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow._OnClose)), HarmonyPriority(Priority.Low)]
         public static void UIStatisticsWindow__OnClose_Postfix()
         {
-            if (_instance == null)
-                return;
-            if (_instance._betterStatsObj != null)
-                BetterStats.UIStatisticsWindow__OnClose_Postfix();
+            BetterStats.UIStatisticsWindow__OnClose_Postfix();
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), "_OnOpen"), HarmonyPriority(Priority.Low)]
         public static void UIStatisticsWindow__OnOpen_Postfix(UIStatisticsWindow __instance)
         {
-            if (_instance != null && _instance._betterStatsObj != null) BetterStats.UIStatisticsWindow__OnOpen_Postfix(__instance);
-            if (_instance != null && _instance != null && _instance.gameObject != null && !PluginConfig.statsOnly.Value)
+            BetterStats.UIStatisticsWindow__OnOpen_Postfix(__instance);
+            if (instance.gameObject != null && !PluginConfig.statsOnly.Value)
             {
-                _instance.AddEnablePrecursorFilterButton(__instance);
-                _instance._enableMadeOn = false;
-                _instance.IsFactoryDataDirty = true;
+                instance.AddEnablePrecursorFilterButton(__instance);
+                instance._enableMadeOn = false;
+                instance.IsFactoryDataDirty = true;
                 if (NebulaCompat.IsClient)
                     NebulaCompat.SendRequest(ERequest.Open);
             }
@@ -283,29 +277,23 @@ namespace Bottleneck
         [HarmonyPostfix, HarmonyPatch(typeof(UIProductEntryList), "FilterEntries")]
         public static void UIProductEntryList_FilterEntries_Postfix(UIProductEntryList __instance)
         {
-            if (_instance != null && _instance._betterStatsObj != null && BetterStats.filterStr != "")
+            if (BetterStats.filterStr != "")
             {
-                var itemsToShow = _instance.GetItemsToShow(__instance);
+                var itemsToShow = instance.GetItemsToShow(__instance);
                 BetterStats.UIProductEntryList_FilterEntries_Postfix(__instance, itemsToShow);
                 return;
             }
 
-            if (_instance != null)
-            {
-                _instance.FilterEntries(__instance);
-            }
+            instance.FilterEntries(__instance);
         }
 
 
         [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow._OnUpdate))]
         public static void UIStatisticsWindow__OnUpdate_Prefix(UIStatisticsWindow __instance)
         {
-            if (_instance == null)
-                return;
-            if (_instance._betterStatsObj != null)
-                BetterStats.UIStatisticsWindow__OnUpdate_Prefix(__instance);
+            BetterStats.UIStatisticsWindow__OnUpdate_Prefix(__instance);
             if (!PluginConfig.statsOnly.Value)
-                _instance.UpdateButtonState();
+                instance.UpdateButtonState();
         }
 
         private void UpdateButtonState()
@@ -327,25 +315,21 @@ namespace Bottleneck
         [HarmonyPostfix, HarmonyPatch(typeof(UIProductEntry), "_OnUpdate"), HarmonyPriority(Priority.Low)]
         public static void UIProductEntry__OnUpdate_Postfix(UIProductEntry __instance)
         {
-            if (_instance != null)
-            {
-                if (_instance._betterStatsObj != null)
-                    BetterStats.UIProductEntry__OnUpdate_Postfix(__instance);
-                if (!PluginConfig.statsOnly.Value)
-                    _instance.OnUpdate(__instance);
-            }
+            BetterStats.UIProductEntry__OnUpdate_Postfix(__instance);
+            if (!PluginConfig.statsOnly.Value)
+                instance.OnUpdate(__instance);
         }
 
         [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow.ComputeDisplayProductEntries))]
         public static void UIProductionStatWindow_ComputeDisplayEntries_Prefix(UIStatisticsWindow __instance)
         {
-            if (_instance == null || __instance == null)
+            if (__instance == null)
                 return;
-            if (_instance._betterStatsObj != null && PluginConfig.statsOnly.Value)
+            if (instance._betterStatsObj != null && PluginConfig.statsOnly.Value)
                 BetterStats.UIProductionStatWindow_ComputeDisplayProductEntries_Prefix(__instance);
             else
             {
-                _instance.RecordEntryData(__instance);
+                instance.RecordEntryData(__instance);
             }
         }
 
@@ -575,11 +559,7 @@ namespace Bottleneck
             }
 
             UIRoot.instance.uiGame.statWindow.RefreshAstroBox();
-
-            if (_betterStatsObj != null)
-            {
-                BetterStats.filterStr = "";
-            }
+            BetterStats.filterStr = "";
         }
 
         private HashSet<int> GetItemsToShow(UIProductEntryList uiProductEntryList)
@@ -685,21 +665,17 @@ namespace Bottleneck
             {
                 ref var miner = ref factorySystem.minerPool[i];
                 if (i != miner.id) continue;
-                if (_betterStatsObj != null && !planetUsage)
-                    BetterStats.RecordMinerStats(miner.type, miner, veinPool, planetFactory.planet.waterItemId);
                 if (!planetUsage)
+                {
+                    BetterStats.RecordMinerStats(miner.type, miner, veinPool, planetFactory.planet.waterItemId);
                     continue;
+                }
                 var productId = miner.productId;
                 var veinId = (miner.veinCount != 0) ? miner.veins[miner.currentVeinIndex] : 0;
-
                 if (miner.type == EMinerType.Water)
-                {
                     productId = planetFactory.planet.waterItemId;
-                }
                 else if (productId == 0)
-                {
                     productId = veinPool[veinId].productId;
-                }
 
                 if (productId == 0) continue;
                 AddPlanetaryUsage(productId, planetFactory.planet);
@@ -720,7 +696,7 @@ namespace Bottleneck
                         AddPlanetaryUsage(productId, planetFactory.planet, true);
                     }
                 }
-                else if (_betterStatsObj != null)
+                else
                 {
                     BetterStats.RecordAssemblerStats(assembler, maxSpeedIncrease, maxProductivityIncrease);
                 }
@@ -736,54 +712,43 @@ namespace Bottleneck
             {
                 ref var fractionator = ref factorySystem .fractionatorPool[i];
                 if (fractionator.id != i) continue;
-                if (_betterStatsObj != null && !planetUsage)
-                    BetterStats.RecordFractionatorStats(fractionator, maxSpeedIncrease, beltMaxStack);
                 if (!planetUsage)
+                {
+                    BetterStats.RecordFractionatorStats(fractionator, maxSpeedIncrease, beltMaxStack);
                     continue;
+                }
+
                 if (fractionator.fluidId != 0)
-                {
-                    var productId = fractionator.fluidId;
-                    AddPlanetaryUsage(productId, planetFactory.planet, true);
-                }
-
+                    AddPlanetaryUsage(fractionator.fluidId, planetFactory.planet, true);
                 if (fractionator.productId != 0)
-                {
-                    var productId = fractionator.productId;
-
-                    AddPlanetaryUsage(productId, planetFactory.planet);
-                }
+                    AddPlanetaryUsage(fractionator.productId, planetFactory.planet);
             }
 
             for (int i = 1; i < factorySystem.ejectorCursor; i++)
             {
                 ref var ejector = ref factorySystem.ejectorPool[i];
                 if (ejector.id != i) continue;
-                if (_betterStatsObj != null && !planetUsage)
-                {
-                    BetterStats.RecordEjectorStats(ejector);
-                }
-
                 if (!planetUsage)
-                    continue;
-                AddPlanetaryUsage(ejector.bulletId, planetFactory.planet, true);
+                    BetterStats.RecordEjectorStats(ejector);
+                else
+                    AddPlanetaryUsage(ejector.bulletId, planetFactory.planet, true);
             }
 
             for (int i = 1; i < factorySystem.siloCursor; i++)
             {
                 ref var silo = ref factorySystem .siloPool[i];
                 if (silo.id != i) continue;
-                if (_betterStatsObj != null && !planetUsage)
-                    BetterStats.RecordSiloStats(silo);
                 if (!planetUsage)
-                    continue;
-                AddPlanetaryUsage(silo.bulletId, planetFactory.planet, true);
+                    BetterStats.RecordSiloStats(silo);
+                else
+                    AddPlanetaryUsage(silo.bulletId, planetFactory.planet, true);
             }
 
             for (int i = 1; i < factorySystem.labCursor; i++)
             {
                 ref var lab = ref factorySystem.labPool[i];
                 if (lab.id != i) continue;
-                if (!planetUsage && _betterStatsObj != null)
+                if (!planetUsage)
                 {
                     BetterStats.RecordLabStats(lab, maxSpeedIncrease, maxProductivityIncrease);
                 }
@@ -815,7 +780,7 @@ namespace Bottleneck
 
             double gasTotalHeat = planetFactory.planet.gasTotalHeat;
             var collectorsWorkCost = planetFactory.transport.collectorsWorkCost;
-            if (!planetUsage && _betterStatsObj != null)
+            if (!planetUsage)
                 for (int i = 1; i < planetFactory.transport.stationCursor; i++)
                 {
                     var station = planetFactory.transport.stationPool[i];
@@ -826,15 +791,10 @@ namespace Bottleneck
             for (int i = 1; i < planetFactory.powerSystem.genCursor; i++)
             {
                 var generator = planetFactory.powerSystem.genPool[i];
-                if (generator.id != i)
-                {
-                    continue;
-                }
+                if (generator.id != i) continue;
 
-                if (!planetUsage && _betterStatsObj != null)
-                {
+                if (!planetUsage)
                     BetterStats.RecordGeneratorStats(generator);
-                }
 
                 var isFuelConsumer = generator.fuelHeat > 0 && generator.fuelId > 0 && generator.productId == 0;
                 if ((generator.productId == 0 || generator.productHeat == 0) && !isFuelConsumer)
@@ -862,11 +822,11 @@ namespace Bottleneck
                 }
             }
 
-            if (!planetUsage && _betterStatsObj != null)
+            if (!planetUsage)
             {
                 BetterStats.RecordSprayCoaterStats(planetFactory);
             }
-            else if (planetUsage)
+            else
             {
                 for (int i = 1; i < planetFactory.cargoTraffic.spraycoaterCursor; i++)
                 {
