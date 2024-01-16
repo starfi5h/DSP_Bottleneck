@@ -28,7 +28,7 @@ namespace Bottleneck
         private readonly Dictionary<int, PlanetaryProductionSummary> _productionLocations = new();
         private readonly HashSet<ProductionKey> _countedProducers = new();
         private readonly HashSet<ProductionKey> _countedConsumers = new();
-        private List<GameObject> objsToDestroy = new();
+        private readonly List<GameObject> objsToDestroy = new();
 
         private readonly Dictionary<UIProductEntry, BottleneckProductEntryElement> _uiElements = new();
         private int _targetItemId = -1;
@@ -38,13 +38,11 @@ namespace Bottleneck
         private Button _btn;
         private Sprite _filterSprite;
         private bool _enableMadeOn;
-        private bool _madeOnComputedSinceOpen;
-        private bool _deficitComputedSinceOpen;
-        private BottleneckTask _pendingMadeOnTask;
-        private BottleneckTask _pendingDeficitTask;
-        private Dictionary<UIButton, FilterButtonItemAge> _buttonTipAge = new();
+        private readonly Dictionary<UIButton, FilterButtonItemAge> _buttonTipAge = new();
         private BetterStats _betterStatsObj;
-        private bool _statsInitted;
+
+        public bool IsFactoryDataDirty { get; set; }
+        private int lastAstroFilter;
 
         private void Awake()
         {
@@ -55,76 +53,12 @@ namespace Bottleneck
             _harmony.PatchAll(typeof(Strings));
             _harmony.PatchAll(typeof(ResearchTechHelper));
             PluginConfig.InitConfig(Config);
+            _betterStatsObj = gameObject.AddComponent<BetterStats>();
             Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} {PluginInfo.PLUGIN_VERSION} is loaded!");
 
             if (Chainloader.PluginInfos.ContainsKey("dsp.nebula-multiplayer"))
             {
                 NebulaCompat.Init(_harmony);
-            }
-        }
-
-        private void ConditionallyLoadStats()
-        {
-            if (_statsInitted)
-                return;
-            Log.Info("Checking for external version of BetterStats");
-            if (Chainloader.PluginInfos.ContainsKey("com.brokenmass.plugin.DSP.BetterStats"))
-            {
-                var pluginInfo = Chainloader.PluginInfos["com.brokenmass.plugin.DSP.BetterStats"];
-                Log.Info($"Found external version of BetterStats {pluginInfo.Metadata.Version}");
-                _statsInitted = true;
-                ProliferatorOperationSetting.Init();
-                return;
-            }
-
-            // see if we can see our own plugin by guid, if not, don't mark as initted
-            if (!Chainloader.PluginInfos.ContainsKey(PluginInfo.PLUGIN_GUID))
-            {
-                Log.Info("Not adding local stats yet, unable to find Bottleneck in list");
-                return;
-            }
-
-            _betterStatsObj = gameObject.AddComponent<BetterStats>();
-            Log.Info($"Added local stats {_betterStatsObj.gameObject.activeSelf}");
-            _statsInitted = true;
-        }
-
-        private void Update()
-        {
-            ConditionallyLoadStats();
-
-            if (_pendingMadeOnTask != null)
-            {
-                var task = _pendingMadeOnTask;
-                _pendingMadeOnTask = null;
-                if (!_madeOnComputedSinceOpen)
-                {
-                    var uiStatsWindow = task.statsWindow;
-                    if (uiStatsWindow == null || uiStatsWindow.gameObject == null || !uiStatsWindow.gameObject.activeSelf)
-                    {
-                        //Log.Debug("skipping madeon task due to window not being active");
-                    }
-                    else if (!NebulaCompat.IsClient)
-                    {
-                        Log.Debug($"Processing madeOn task, age: {DateTime.Now - task.createdAt}");
-                        ProcessMadeOnTask();
-                    }
-
-                    _madeOnComputedSinceOpen = true;
-                }
-                else
-                {
-                    //Log.Debug("Skipping madeOn task since window has not been opened since last attempt");
-                }
-            }
-
-            if (_pendingDeficitTask != null)
-            {
-                var task = _pendingDeficitTask;
-                _pendingDeficitTask = null;
-                //Log.Debug($"Processing deficit task, age: {DateTime.Now - task.createdAt}");
-                ProcessDeficitTask(task);
-                _deficitComputedSinceOpen = true;
             }
         }
 
@@ -137,19 +71,12 @@ namespace Bottleneck
             {
                 AddPlanetFactoryData(GameMain.data.factories[i], true);
             }
-
             _enableMadeOn = true;
         }
 
-        private void ProcessDeficitTask(BottleneckTask task)
+        private void ProcessDeficitTask()
         {
-            var uiStatsWindow = task.statsWindow;
-            if (uiStatsWindow == null || uiStatsWindow.gameObject == null || !uiStatsWindow.gameObject.activeSelf)
-            {
-                Log.Debug("skipping deficit task due to window not being active");
-                return;
-            }
-
+            var uiStatsWindow = UIRoot.instance.uiGame.statWindow;
             if (NebulaCompat.IsClient && uiStatsWindow.astroFilter != 0)
             {
                 if (uiStatsWindow.astroFilter != NebulaCompat.LastAstroFilter)
@@ -331,13 +258,14 @@ namespace Bottleneck
         }
 
         [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow._OnClose)), HarmonyPriority(Priority.Last)]
-        public static void UIStatisticsWindow__OnClose_Postfix(UIStatisticsWindow __instance)
+        public static void UIStatisticsWindow__OnClose_Postfix()
         {
             if (_instance == null)
                 return;
             if (_instance._betterStatsObj != null)
                 BetterStats.UIStatisticsWindow__OnClose_Postfix();
         }
+
         [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), "_OnOpen"), HarmonyPriority(Priority.Last)]
         public static void UIStatisticsWindow__OnOpen_Postfix(UIStatisticsWindow __instance)
         {
@@ -345,8 +273,7 @@ namespace Bottleneck
             if (_instance != null && _instance != null && _instance.gameObject != null && !PluginConfig.statsOnly.Value)
             {
                 _instance.AddEnablePrecursorFilterButton(__instance);
-                _instance._madeOnComputedSinceOpen = false;
-                _instance._deficitComputedSinceOpen = false;
+                _instance.IsFactoryDataDirty = true;
                 if (NebulaCompat.IsClient)
                     NebulaCompat.SendRequest(ERequest.Open);
             }
@@ -423,35 +350,19 @@ namespace Bottleneck
 
         private void RecordEntryData(UIStatisticsWindow uiStatsWindow)
         {
-            bool planetUsageMode = Time.frameCount % 500 == 0;
-            bool deficitMode = Time.frameCount % 102 == 0;
-            if (!deficitMode && _betterStatsObj != null)
-            {
-                deficitMode = Time.frameCount % 10 == 0;
-            }
+            //bool planetUsageMode = Time.frameCount % 500 == 0;
 
-            if (!planetUsageMode && !deficitMode && _deficitComputedSinceOpen && _madeOnComputedSinceOpen)
+            if (!_enableMadeOn)
             {
-                // no need to run every frame
-                return;
+                // Update when stat window open
+                ProcessMadeOnTask();
             }
-
-            if (planetUsageMode || !_enableMadeOn)
+            if (IsFactoryDataDirty || uiStatsWindow.astroFilter != lastAstroFilter)
             {
-                _pendingMadeOnTask = new BottleneckTask
-                {
-                    statsWindow = uiStatsWindow,
-                    taskType = TaskType.MadeOn,
-                };
-            }
-
-            if (deficitMode && _pendingDeficitTask == null)
-            {
-                _pendingDeficitTask = new BottleneckTask
-                {
-                    statsWindow = uiStatsWindow,
-                    taskType = TaskType.Deficit
-                };
+                // Update when settings or filter change
+                lastAstroFilter = uiStatsWindow.astroFilter;
+                IsFactoryDataDirty = false;
+                ProcessDeficitTask();
             }
         }
 
@@ -899,9 +810,7 @@ namespace Bottleneck
             }
 
             double gasTotalHeat = planetFactory.planet.gasTotalHeat;
-#pragma warning disable Publicizer001
             var collectorsWorkCost = planetFactory.transport.collectorsWorkCost;
-#pragma warning restore Publicizer001
             if (!planetUsage && _betterStatsObj != null)
                 for (int i = 1; i < planetFactory.transport.stationCursor; i++)
                 {
