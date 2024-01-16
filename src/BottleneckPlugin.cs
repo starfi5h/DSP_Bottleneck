@@ -230,8 +230,8 @@ namespace Bottleneck
                     {
                         if (_instance._productionLocations.TryGetValue(_instance._targetItemId, out var locationSummary))
                         {
-                            if ((_successor && locationSummary.IsConsumerPlanet(planetData.displayName))
-                                || (!_successor && locationSummary.IsProducerPlanet(planetData.displayName)))
+                            if ((_successor && locationSummary.IsConsumerPlanet(planetData.id))
+                                || (!_successor && locationSummary.IsProducerPlanet(planetData.id)))
                             {
                                 // keep, but first add system
                                 if (currentSystemId > 0 && PluginConfig.systemFilter.Value)
@@ -422,8 +422,8 @@ namespace Bottleneck
                     var parensMessage = ItemUtil.HasPrecursors(productId) ? Strings.ControlClickLacking : "";
                     var producedOnText = Strings.ProducedOnLabel;
                     tipText = $"{parensMessage}<b>{producedOnText}</b>\r\n" + _productionLocations[productId].GetProducerSummary();
-                    if (_productionLocations[productId].PlanetCount() > PluginConfig.productionPlanetCount.Value)
-                        tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].PlanetCount()} planets)";
+                    if (_productionLocations[productId].ProducerPlanetCount() > PluginConfig.productionPlanetCount.Value)
+                        tipTitle += $" (top {PluginConfig.productionPlanetCount.Value} / {_productionLocations[productId].ProducerPlanetCount()} planets)";
                 }
                 else
                 {
@@ -877,9 +877,9 @@ namespace Bottleneck
             }
 
             if (consumption)
-                _productionLocations[productId].AddConsumption(planet.displayName, 1);
+                _productionLocations[productId].AddConsumption(planet.id, 1);
             else
-                _productionLocations[productId].AddProduction(planet.displayName, 1);
+                _productionLocations[productId].AddProduction(planet.id, 1);
         }
     }
 }
