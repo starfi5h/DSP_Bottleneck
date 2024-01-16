@@ -56,7 +56,7 @@ namespace Bottleneck.Stats
                     }
                 }
 
-                // corner=9 is ABOVE_RIGHT, according to this idiot: https://github.com/mattsemar/dsp-personal-logistics/blob/25bba06c7127516f1897c9e76ef8a77342933d7d/UI/UINetworkStatusTip.cs#L19
+                // corner=9 is ABOVE_RIGHT (relative position of numpad)
                 tip = UIItemTip.Create(itemId, 9, Vector2.zero, 
                     productEntry.itemIcon.transform,
                     0, 0, UIButton.ItemTipType.Other);
@@ -873,7 +873,6 @@ namespace Bottleneck.Stats
         {
             if (assembler.id < 1 || assembler.recipeId == 0)
                 return;
-            var isNonProductiveRecipe = LDB.recipes.Select(assembler.recipeId).NonProductive;
             var baseFrequency = 60f / (float)(assembler.timeSpend / 600000.0);
             var productionFrequency = baseFrequency;
             var speed = (float)(0.0001 * assembler.speed);
@@ -884,29 +883,22 @@ namespace Bottleneck.Stats
             // forceAccMode is 'Production Speedup' mode. It just adds a straight increase to both production and consumption rate
             if (runtimeSetting.Enabled)
             {
-                if (runtimeSetting.Mode == ItemCalculationMode.Normal)
+                switch (runtimeSetting.Mode)
                 {
-                    // let assembler decide
-                    if (assembler.forceAccMode || isNonProductiveRecipe)
-                    {
+                    case ItemCalculationMode.Normal:
+                        if (!assembler.forceAccMode && assembler.productive)
+                            productionFrequency += productionFrequency * maxProductivityIncrease;
+                        else
+                            speed += speed * maxSpeedIncrease;
+                        break;
+
+                    case ItemCalculationMode.ForceSpeed:
                         speed += speed * maxSpeedIncrease;
-                    }
-                    else
-                    {
+                        break;
+
+                    case ItemCalculationMode.ForceProductivity:
                         productionFrequency += productionFrequency * maxProductivityIncrease;
-                    }
-                }
-                else if (runtimeSetting.Mode == ItemCalculationMode.ForceSpeed)
-                {
-                    speed += speed * maxSpeedIncrease;
-                }
-                else if (runtimeSetting.Mode == ItemCalculationMode.ForceProductivity)
-                {
-                    productionFrequency += productionFrequency * maxProductivityIncrease;
-                }
-                else
-                {
-                    Log.LogWarning($"unexpected runtime setting ${JsonUtility.ToJson(runtimeSetting)}");
+                        break;
                 }
             }
 
