@@ -10,9 +10,9 @@ namespace Bottleneck
 {
     public class ProductionDeficitItem
     {
-        public string recipeName;
-        public int assemblerCount { get; set; }
-        public int lackingPowerCount { get; set; }
+        public string RecipeName { get; set; }
+        public int AssemblerCount { get; set; }
+        public int LackingPowerCount { get; set; }
 
         private readonly int[] needed = new int[10];
         private readonly int[] assemblersNeedingCount = new int[10];
@@ -23,8 +23,8 @@ namespace Bottleneck
         private int neededCount;
         public int jammedCount;
 
-        private static Dictionary<int, Dictionary<int, ProductionDeficitItem>> _byItemByRecipeId = new();
-        private static Dictionary<int, ProductionDeficitItem> _byItemOnly = new();
+        private static readonly Dictionary<int, Dictionary<int, ProductionDeficitItem>> _byItemByRecipeId = new();
+        private static readonly Dictionary<int, ProductionDeficitItem> _byItemOnly = new();
 
         public void AddNeeded(int itemId, int count)
         {
@@ -37,7 +37,7 @@ namespace Bottleneck
 
         public (string neededStr, string stackStr, string unpoweredStr, string unsprayStr) TopNeeded(int outputProductId)
         {
-            if (assemblerCount < 1)
+            if (AssemblerCount < 1)
             {
                 return ("", "", "", "");
             }
@@ -69,15 +69,15 @@ namespace Bottleneck
                 }
             }
 
-            var percent = (double)assemblerNeedingCount / assemblerCount;
-            var stackingPercent = (double)jammedCount / assemblerCount;
+            var percent = (double)assemblerNeedingCount / AssemblerCount;
+            var stackingPercent = (double)jammedCount / AssemblerCount;
             var neededStr = percent < 0.01 ? "" : $"{neededName} {percent:P2}";
             var stackingStr = stackingPercent < 0.01 ? "" : $"{stackingPercent:P2}";
-            var unpoweredPercent = (double)lackingPowerCount / assemblerCount;
+            var unpoweredPercent = (double)LackingPowerCount / AssemblerCount;
             var unpoweredstr = unpoweredPercent < 0.01 ? "" : $"{unpoweredPercent:P2}";
-            var unsprayedPercent = (double)missingSprayCount / assemblerCount;
+            var unsprayedPercent = (double)missingSprayCount / AssemblerCount;
             var missingSprayStr = (double)missingSprayCount > 0.01 ? $"{missingSprayName} {unsprayedPercent:P2}" : "";
-            if (secondNeededName.Length > 0 && (double)secondAssemblerNeedingCount / assemblerCount > 0.01)
+            if (secondNeededName.Length > 0 && (double)secondAssemblerNeedingCount / AssemblerCount > 0.01)
             {
                 return ($"{neededStr} (2nd: {secondNeededName})".Trim(), $"{stackingStr}".Trim(), unpoweredstr, missingSprayStr);
             }
@@ -95,7 +95,7 @@ namespace Bottleneck
                 {
                     // neededMax = needed[i];
                     var assemblerNeedingCount = assemblersNeedingCount[i];
-                    var percent = (double)assemblerNeedingCount / assemblerCount;
+                    var percent = (double)assemblerNeedingCount / AssemblerCount;
                     if (percent > 0.05)
                     {
                         result.Add(inputItemId[i]);
@@ -130,7 +130,7 @@ namespace Bottleneck
             item.inputItemId[0] = inputItemId;
             item.inputItemIndex[inputItemId] = 0;
             item.needed[item.inputItemIndex[inputItemId]] = 0;
-            item.recipeName = "Ray receiver";
+            item.RecipeName = "Ray receiver";
             return item;
         }
 
@@ -151,7 +151,7 @@ namespace Bottleneck
                 value = new ProductionDeficitItem
                 {
                     neededCount = requires,
-                    recipeName = ItemUtil.GetRecipeName(recipeId),
+                    RecipeName = ItemUtil.GetRecipeName(recipeId),
                 };
                 if (assemblerComponent.requires != null && assemblerComponent.requires.Length > 0)
                     for (int i = 0; i < value.neededCount; i++)
@@ -183,7 +183,7 @@ namespace Bottleneck
                 value = new ProductionDeficitItem
                 {
                     neededCount = assemblerComponent.requires.Length,
-                    recipeName = LDB.recipes.Select(recipeId).Name.Translate()
+                    RecipeName = LDB.recipes.Select(recipeId).Name.Translate()
                 };
                 for (int i = 0; i < value.neededCount; i++)
                 {
@@ -205,9 +205,9 @@ namespace Bottleneck
             Array.Clear(assemblersNeedingCount, 0, assemblersNeedingCount.Length);
             Array.Clear(assemblersMissingSprayCount, 0, assemblersMissingSprayCount.Length);
 
-            assemblerCount = 0;
+            AssemblerCount = 0;
             jammedCount = 0;
-            lackingPowerCount = 0;
+            LackingPowerCount = 0;
         }
 
         public static void ClearCounts()
@@ -286,7 +286,7 @@ namespace Bottleneck
 
                 if (productionDeficitItems.Count > 1)
                 {
-                    result.Append($"{Strings.RecipePreText}: {deficitItem.recipeName}, {tmpResultStr}");
+                    result.Append($"{Strings.RecipePreText}: {deficitItem.RecipeName}, {tmpResultStr}");
                 }
                 else
                 {
@@ -310,15 +310,15 @@ namespace Bottleneck
             float ratio = powerNetwork == null || networkId <= 0 ? 1f : (float)powerNetwork.consumerRatio;
             if (ratio < 0.98f)
             {
-                item.lackingPowerCount++;
+                item.LackingPowerCount++;
                 if (!_loggedLowPowerByPlanetId.Contains(planetFactory.planet.id))
                 {
                     if (PluginConfig.popupLowPowerWarnings.Value)
                     {
                         Log.LogAndPopupMessage($"Planet '{planetFactory.planet.displayName}' low on power");
                         var assemblerPos = planetFactory.entityPool[assembler.entityId].pos;
-                        Maths.GetLatitudeLongitude(assemblerPos, out int latd, out int latf, out int logd, out int logf, out bool north, out bool south, out bool west,
-                            out bool east);
+                        Maths.GetLatitudeLongitude(assemblerPos, out int latd, out int latf, out int logd, out int logf, 
+                            out bool north, out bool _, out bool west, out bool _);
                         Log.Warn($"{latd}.{latf} {north}, {logd}.{logf} {west}");
                     }
                     else
@@ -330,7 +330,7 @@ namespace Bottleneck
                 }
             }
 
-            item.assemblerCount++;
+            item.AssemblerCount++;
             for (int index = 0; index < assembler.requireCounts.Length; ++index)
             {
                 if (assembler.served[index] < assembler.requireCounts[index])
@@ -358,14 +358,14 @@ namespace Bottleneck
         {
             var maxIncLevel = ResearchTechHelper.GetMaxIncIndex();
             var item = ProductionDeficitItem.FromItem(itemId, lab);
-            item.assemblerCount++;
+            item.AssemblerCount++;
             PowerConsumerComponent consumerComponent = planetFactory.powerSystem.consumerPool[lab.pcId];
             int networkId = consumerComponent.networkId;
             PowerNetwork powerNetwork = planetFactory.powerSystem.netPool[networkId];
             float ratio = powerNetwork == null || networkId <= 0 ? 1f : (float)powerNetwork.consumerRatio;
             if (ratio < 0.98f)
             {
-                item.lackingPowerCount++;
+                item.LackingPowerCount++;
                 if (!_loggedLowPowerByPlanetId.Contains(planetFactory.planet.id))
                 {
                     if (PluginConfig.popupLowPowerWarnings.Value)
@@ -416,10 +416,10 @@ namespace Bottleneck
             return false;
         }
 
-        public static void RecordDeficit(int rayReceiverProductId, PowerGeneratorComponent generator, PlanetFactory planetFactory)
+        public static void RecordDeficit(int rayReceiverProductId, PowerGeneratorComponent generator, PlanetFactory _)
         {
             var item = ProductionDeficitItem.FromItem(generator.catalystId, rayReceiverProductId);
-            item.assemblerCount++;
+            item.AssemblerCount++;
 
             if (generator.productCount > 5)
             {

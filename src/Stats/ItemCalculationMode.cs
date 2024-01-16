@@ -160,7 +160,6 @@ namespace Bottleneck.Stats
 
         public static void InputModes(in int[] productIds, in short[] modes)
         {
-            int num = Pool.Count;
             for (int i = 0; i < productIds.Length; i++)
             {
                 int id = productIds[i];

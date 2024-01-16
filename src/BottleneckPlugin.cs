@@ -182,7 +182,7 @@ namespace Bottleneck
             _uiElements.Clear();
         }
 
-        [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow.ValueToAstroBox)), HarmonyPriority(Priority.Last)]
+        [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow.ValueToAstroBox)), HarmonyPriority(Priority.Low)]
         public static void UIStatisticsWindow__ValueToAstroBox_Postfix(UIStatisticsWindow __instance)
         {
             if (!__instance.isStatisticsTab || NebulaCompat.IsClient)
@@ -257,7 +257,7 @@ namespace Bottleneck
             }
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow._OnClose)), HarmonyPriority(Priority.Last)]
+        [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow._OnClose)), HarmonyPriority(Priority.Low)]
         public static void UIStatisticsWindow__OnClose_Postfix()
         {
             if (_instance == null)
@@ -266,7 +266,7 @@ namespace Bottleneck
                 BetterStats.UIStatisticsWindow__OnClose_Postfix();
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), "_OnOpen"), HarmonyPriority(Priority.Last)]
+        [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), "_OnOpen"), HarmonyPriority(Priority.Low)]
         public static void UIStatisticsWindow__OnOpen_Postfix(UIStatisticsWindow __instance)
         {
             if (_instance != null && _instance._betterStatsObj != null) BetterStats.UIStatisticsWindow__OnOpen_Postfix(__instance);
@@ -324,7 +324,7 @@ namespace Bottleneck
             }
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIProductEntry), "_OnUpdate"), HarmonyPriority(Priority.Last)]
+        [HarmonyPostfix, HarmonyPatch(typeof(UIProductEntry), "_OnUpdate"), HarmonyPriority(Priority.Low)]
         public static void UIProductEntry__OnUpdate_Postfix(UIProductEntry __instance)
         {
             if (_instance != null)
@@ -702,7 +702,7 @@ namespace Bottleneck
                 }
 
                 if (productId == 0) continue;
-                AddPlanetaryUsage(productId, planetFactory.planet, miner.entityId);
+                AddPlanetaryUsage(productId, planetFactory.planet);
             }
 
             var maxProductivityIncrease = ResearchTechHelper.GetMaxProductivityIncrease();
@@ -717,7 +717,7 @@ namespace Bottleneck
                 {
                     foreach (var productId in assembler.requires)
                     {
-                        AddPlanetaryUsage(productId, planetFactory.planet, assembler.entityId, true);
+                        AddPlanetaryUsage(productId, planetFactory.planet, true);
                     }
                 }
                 else if (_betterStatsObj != null)
@@ -727,7 +727,7 @@ namespace Bottleneck
 
                 foreach (var productId in assembler.products)
                 {
-                    if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet, assembler.entityId);
+                    if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet);
                     else ProductionDeficit.RecordDeficit(productId, assembler, planetFactory);
                 }
             }
@@ -743,14 +743,14 @@ namespace Bottleneck
                 if (fractionator.fluidId != 0)
                 {
                     var productId = fractionator.fluidId;
-                    AddPlanetaryUsage(productId, planetFactory.planet, fractionator.entityId, true);
+                    AddPlanetaryUsage(productId, planetFactory.planet, true);
                 }
 
                 if (fractionator.productId != 0)
                 {
                     var productId = fractionator.productId;
 
-                    AddPlanetaryUsage(productId, planetFactory.planet, fractionator.entityId);
+                    AddPlanetaryUsage(productId, planetFactory.planet);
                 }
             }
 
@@ -765,7 +765,7 @@ namespace Bottleneck
 
                 if (!planetUsage)
                     continue;
-                AddPlanetaryUsage(ejector.bulletId, planetFactory.planet, ejector.entityId, true);
+                AddPlanetaryUsage(ejector.bulletId, planetFactory.planet, true);
             }
 
             for (int i = 1; i < factorySystem.siloCursor; i++)
@@ -776,7 +776,7 @@ namespace Bottleneck
                     BetterStats.RecordSiloStats(silo);
                 if (!planetUsage)
                     continue;
-                AddPlanetaryUsage(silo.bulletId, planetFactory.planet, silo.entityId, true);
+                AddPlanetaryUsage(silo.bulletId, planetFactory.planet, true);
             }
 
             for (int i = 1; i < factorySystem.labCursor; i++)
@@ -793,12 +793,12 @@ namespace Bottleneck
                     if (planetUsage)
                         foreach (var productId in lab.requires)
                         {
-                            AddPlanetaryUsage(productId, planetFactory.planet, lab.entityId, true);
+                            AddPlanetaryUsage(productId, planetFactory.planet, true);
                         }
 
                     foreach (var productId in lab.products)
                     {
-                        if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet, lab.entityId);
+                        if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet);
                         else ProductionDeficit.RecordDeficit(productId, lab, planetFactory);
                     }
                 }
@@ -808,7 +808,7 @@ namespace Bottleneck
                     for (int index = 0; index < techProto.itemArray.Length; ++index)
                     {
                         var item = techProto.Items[index];
-                        AddPlanetaryUsage(item, planetFactory.planet, lab.entityId, true);
+                        AddPlanetaryUsage(item, planetFactory.planet, true);
                     }
                 }
             }
@@ -846,16 +846,16 @@ namespace Bottleneck
                 {
                     // account for fuel consumption by power generator
                     var productId = generator.fuelId;
-                    if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet, generator.entityId, true);
+                    if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet, true);
                 }
                 else
                 {
                     var productId = generator.productId;
-                    if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet, generator.entityId);
+                    if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet);
 
                     if (generator.catalystId > 0)
                     {
-                        if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet, generator.entityId);
+                        if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet);
                         else // this should be critical photons 
                             ProductionDeficit.RecordDeficit(generator.productId, generator, planetFactory);
                     }
@@ -868,7 +868,7 @@ namespace Bottleneck
             }
         }
 
-        private void AddPlanetaryUsage(int productId, PlanetData planet, int _, bool consumption = false)
+        private void AddPlanetaryUsage(int productId, PlanetData planet, bool consumption = false)
         {
             // An entity can have multiple components
             if (!_productionLocations.ContainsKey(productId))

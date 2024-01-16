@@ -569,9 +569,8 @@ namespace Bottleneck.Stats
             enhancement.maxProductionUnit.text =
                 enhancement.maxConsumptionUnit.text = unitRate;
 
-            if (counter.ContainsKey(__instance.entryData.itemId))
+            if (counter.TryGetValue(__instance.entryData.itemId, out var productMetrics))
             {
-                var productMetrics = counter[__instance.entryData.itemId];
                 float maxProductValue = productMetrics.production / divider;
                 float maxConsumeValue = productMetrics.consumption / divider;
                 maxProduction = FormatMetric(maxProductValue);
