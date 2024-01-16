@@ -27,8 +27,6 @@ namespace Bottleneck
         private GameObject _enablePrecursorTextGO;
         private readonly HashSet<int> _itemFilter = new();
         private readonly Dictionary<int, PlanetaryProductionSummary> _productionLocations = new();
-        private readonly HashSet<ProductionKey> _countedProducers = new();
-        private readonly HashSet<ProductionKey> _countedConsumers = new();
         private readonly List<GameObject> objsToDestroy = new();
 
         private readonly Dictionary<UIProductEntry, BottleneckProductEntryElement> _uiElements = new();
@@ -67,8 +65,6 @@ namespace Bottleneck
         public void ProcessMadeOnTask()
         {
             _productionLocations.Clear();
-            _countedConsumers.Clear();
-            _countedProducers.Clear();
             for (int i = 0; i < GameMain.data.factoryCount; i++)
             {
                 AddPlanetFactoryData(GameMain.data.factories[i], true);
@@ -872,15 +868,9 @@ namespace Bottleneck
             }
         }
 
-        private void AddPlanetaryUsage(int productId, PlanetData planet, int entityId, bool consumption = false)
+        private void AddPlanetaryUsage(int productId, PlanetData planet, int _, bool consumption = false)
         {
-            var productionKey = ProductionKey.From(productId, planet.id, entityId);
-            var keys = consumption ? _countedConsumers : _countedProducers;
-            if (keys.Contains(productionKey))
-            {
-                return;
-            }
-
+            // An entity can have multiple components
             if (!_productionLocations.ContainsKey(productId))
             {
                 _productionLocations[productId] = new PlanetaryProductionSummary();
@@ -890,7 +880,6 @@ namespace Bottleneck
                 _productionLocations[productId].AddConsumption(planet.displayName, 1);
             else
                 _productionLocations[productId].AddProduction(planet.displayName, 1);
-            keys.Add(productionKey);
         }
     }
 }

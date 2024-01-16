@@ -5,47 +5,6 @@ using System.Linq;
 
 namespace Bottleneck
 {
-    public class ProductionKey : IComparable<ProductionKey>
-    {
-        private readonly int _productId;
-        private readonly int _planetId;
-        private readonly int _producerId;
-        private static readonly Dictionary<int, Dictionary<int, Dictionary<int, ProductionKey>>> Pool = new();
-
-        private ProductionKey(int productId, int planetId, int producerId)
-        {
-            _productId = productId;
-            _planetId = planetId;
-            _producerId = producerId;
-        }
-
-        public static ProductionKey From(int productId, int planId, int producerId)
-        {
-            if (!Pool.ContainsKey(productId))
-            {
-                Pool[productId] = new Dictionary<int, Dictionary<int, ProductionKey>>();
-            }
-
-            if (!Pool[productId].ContainsKey(planId))
-            {
-                Pool[productId][planId] = new Dictionary<int, ProductionKey>();
-            }
-
-            if (Pool[productId][planId].ContainsKey(producerId))
-            {
-                return Pool[productId][planId][producerId];
-            }
-
-            Pool[productId][planId][producerId] = new ProductionKey(productId, planId, producerId);
-            return Pool[productId][planId][producerId];
-        }
-
-        public int CompareTo(ProductionKey other) => String.Compare(ToString(), other.ToString(), StringComparison.Ordinal);
-        public override string ToString() => $"{_productId}_{_planetId}_{_producerId}";
-
-        public override int GetHashCode() => ToString().GetHashCode();
-    }
-
     public class PlanetaryProduction : IComparable<PlanetaryProduction>
     {
         public string PlanetName;
