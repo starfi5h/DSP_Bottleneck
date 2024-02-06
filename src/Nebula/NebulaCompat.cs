@@ -5,6 +5,8 @@ using Bottleneck.Util;
 using Bottleneck.Stats;
 using HarmonyLib;
 using NebulaAPI;
+using NebulaAPI.Packets;
+using NebulaAPI.Networking;
 
 namespace Bottleneck.Nebula
 {
@@ -14,7 +16,7 @@ namespace Bottleneck.Nebula
         public static bool IsClient { get; private set; }
         public static int LastAstroFilter { get; private set; }
 
-        public static void Init(Harmony harmony)
+        public static void Init(Harmony _)
         {
             try
             {
@@ -60,6 +62,8 @@ namespace Bottleneck.Nebula
         public static void SendRequest(ERequest request)
         {
             int astroFilter = UIRoot.instance.uiGame.statWindow.astroFilter;
+            if (astroFilter == 0)
+                return;
             NebulaModAPI.MultiplayerSession.Network.SendPacket(new Bottleneck_Request(request, astroFilter));
             Log.Debug($"{request} {astroFilter}");
             LastAstroFilter = astroFilter;
@@ -196,11 +200,13 @@ namespace Bottleneck.Nebula
             BetterStats.counter.Clear();
             for (int i = 0; i < packet.Ids.Length; i++)
             {
-                var value = new BetterStats.ProductMetrics();
-                value.producers = packet.Producers[i];
-                value.consumers = packet.Consumers[i];
-                value.production = packet.Productions[i];
-                value.consumption = packet.Consumptions[i];
+                var value = new BetterStats.ProductMetrics
+                {
+                    producers = packet.Producers[i],
+                    consumers = packet.Consumers[i],
+                    production = packet.Productions[i],
+                    consumption = packet.Consumptions[i]
+                };
                 BetterStats.counter.Add(packet.Ids[i], value);
             }
         }

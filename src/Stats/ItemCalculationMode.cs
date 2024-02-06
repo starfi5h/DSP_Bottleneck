@@ -160,11 +160,14 @@ namespace Bottleneck.Stats
 
         public static void InputModes(in int[] productIds, in short[] modes)
         {
+            // Somehow client's productIds contians key that doesn't exist in host's pool
             for (int i = 0; i < productIds.Length; i++)
             {
-                int id = productIds[i];
-                Pool[id]._enabled = (modes[i] & 1) > 0;
-                Pool[id]._mode = ((ItemCalculationMode)(modes[i] >> 1));
+                if (Pool.TryGetValue(productIds[i], out var setting))
+                {
+                    setting._enabled = (modes[i] & 1) > 0;
+                    setting._mode = ((ItemCalculationMode)(modes[i] >> 1));
+                }
             }
         }
     }
