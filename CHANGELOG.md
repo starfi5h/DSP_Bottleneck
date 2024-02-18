@@ -1,5 +1,8 @@
 ## Changelog
 
+### v1.1.1
+* Update: Adpat NebulaAPIv2.0.0.  
+
 ### v1.1.0
 * Update: Refactor and add multithreading to improve performance.  
 * Bugfix: Fix recipe of non-productive product not set to production speedup mode when using assembler setting.  

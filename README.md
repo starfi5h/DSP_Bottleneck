@@ -39,8 +39,7 @@ For production items that can be proliferated, buttons are added next to each it
 ## Notes
 This mod was originally planned as an enhancement to BetterStats by brokenmass. Now this fork continue the work of Semar and adpat to the Dark Fog update in the game.
 
-Planetary consumption/production is only calculated one time after the statistics window is opened. If you add machines to your factory while the stats window is
-open (maybe you're running at a very high resolution?) then you'll have to close and re-open the window to see those values update to reflect the change
+Planetary consumption/production is only calculated one time after the statistics window is opened. If you add machines to your factory while the stats window is open then you'll have to close and re-open the window to see those values update to reflect the change.  
 
 ## Contact
 Bugs? Create an issue in the github repository.
