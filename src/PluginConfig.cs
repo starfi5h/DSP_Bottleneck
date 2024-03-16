@@ -17,6 +17,8 @@ namespace Bottleneck
         public static ConfigEntry<int> overwriteStackingLevel;
         public static ConfigEntry<int> overwriteProliferatorLevel;
         public static ConfigEntry<bool> disableProliferatorCalc; // To make it not break MMS compat
+        public static ConfigEntry<float> ejectorSpeedFactor;
+        public static ConfigEntry<float> siloSpeedFactor;
 
 
         public static void InitConfig(ConfigFile confFile)
@@ -41,6 +43,7 @@ namespace Bottleneck
                 " (e.g. if set to '1.5' then you will be warned if your max consumption is more than 150% of your max production)");
             displayPerSecond = confFile.Bind("General", "displayPerSecond", false,
                 "Used by UI to persist the last selected value for checkbox");
+
             statsOnly = confFile.Bind("Stats", "Disable Bottleneck", false,
                 "Disable Bottleneck functionality, use only BetterStats features");
             overwriteStackingLevel = confFile.Bind("Stats", "Overwrite Stacking Level", -1,
@@ -49,6 +52,10 @@ namespace Bottleneck
                 "Overwrite the maximum proliferator level. By default it uses the highest proliferator unlocked");
             disableProliferatorCalc = confFile.Bind("Stats", "Disable Proliferator Calculation", false,
                 "Tells mod to ignore proliferator points completely. Can cause production rates to exceed theoretical max values");
+            ejectorSpeedFactor = confFile.Bind("Stats", "Ejector Speed Factor", 1.0f,
+                "EM-Rail Ejector speed multiplier. Set this value to 2.0 when feeding proliferated sails.");
+            siloSpeedFactor = confFile.Bind("Stats", "Silo Speed Factor", 1.0f,
+                "Vertical Launching Silo speed multiplier. Set this value to 2.0 when feeding proliferated rockets.");
         }
     }
 }

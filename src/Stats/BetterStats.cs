@@ -820,7 +820,7 @@ namespace Bottleneck.Stats
         {
             EnsureId(ref counter, silo.bulletId);
 
-            counter[silo.bulletId].consumption += 60f / (silo.chargeSpend + silo.coldSpend) * 600000f;
+            counter[silo.bulletId].consumption += PluginConfig.siloSpeedFactor.Value * 60f / (silo.chargeSpend + silo.coldSpend) * 600000f;
             counter[silo.bulletId].consumers++;
         }
 
@@ -828,7 +828,7 @@ namespace Bottleneck.Stats
         {
             EnsureId(ref counter, ejector.bulletId);
 
-            counter[ejector.bulletId].consumption += 60f / (ejector.chargeSpend + ejector.coldSpend) * 600000f;
+            counter[ejector.bulletId].consumption += PluginConfig.ejectorSpeedFactor.Value * 60f / (ejector.chargeSpend + ejector.coldSpend) * 600000f;
             counter[ejector.bulletId].consumers++;
         }
 
