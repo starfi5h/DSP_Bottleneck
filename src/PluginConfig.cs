@@ -19,6 +19,7 @@ namespace Bottleneck
         public static ConfigEntry<bool> disableProliferatorCalc; // To make it not break MMS compat
         public static ConfigEntry<float> ejectorSpeedFactor;
         public static ConfigEntry<float> siloSpeedFactor;
+        public static ConfigEntry<float> minerOutputLimit;
 
 
         public static void InitConfig(ConfigFile confFile)
@@ -56,6 +57,8 @@ namespace Bottleneck
                 "EM-Rail Ejector speed multiplier. Set this value to 2.0 when feeding proliferated sails.");
             siloSpeedFactor = confFile.Bind("Stats", "Silo Speed Factor", 1.0f,
                 "Vertical Launching Silo speed multiplier. Set this value to 2.0 when feeding proliferated rockets.");
+            minerOutputLimit = confFile.Bind("Stats", "Miner Output Limit", 0.0f,
+                "Maximum output limit (/min) of Mining Machine, Water Pump or Oil Extractor. Default value (0) is no limit");
         }
     }
 }

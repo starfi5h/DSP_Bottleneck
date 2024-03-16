@@ -673,14 +673,16 @@ namespace Bottleneck.Stats
             if (planetFactory == null) return;
             var factorySystem = planetFactory.factorySystem;
             var transport = planetFactory.transport;
-            var veinPool = planetFactory.planet.factory.veinPool;
             var maxProductivityIncrease = ResearchTechHelper.GetMaxProductivityIncrease();
             var maxSpeedIncrease = ResearchTechHelper.GetMaxSpeedIncrease();
             int beltMaxStack = ResearchTechHelper.GetMaxPilerStackingUnlocked();
+
+            var waterItemId = planetFactory.planet.waterItemId;
             for (int i = 1; i < factorySystem.minerCursor; i++)
             {
                 ref var miner = ref factorySystem.minerPool[i];
-                RecordMinerStats(factorySystem.minerPool[i].type, miner, veinPool, planetFactory.planet.waterItemId);
+                if (i != miner.id) continue;
+                RecordMinerStats(miner, planetFactory, waterItemId);
             }
 
             for (int i = 1; i < factorySystem.assemblerCursor; i++)
@@ -971,9 +973,10 @@ namespace Bottleneck.Stats
             }
         }
 
-        public static void RecordMinerStats(EMinerType minerType, in MinerComponent miner, VeinData[] veinPool, int waterItemId)
+        public static void RecordMinerStats(in MinerComponent miner, PlanetFactory planetFactory, int waterItemId)
         {
             if (miner.id < 1) return;
+            var veinPool = planetFactory.veinPool;
             var miningSpeedScale = (double)GameMain.history.miningSpeedScale;
             var productId = miner.productId;
             var veinId = (miner.veinCount != 0) ? miner.veins[miner.currentVeinIndex] : 0;
@@ -986,31 +989,32 @@ namespace Bottleneck.Stats
             {
                 productId = veinPool[veinId].productId;
             }
-
             if (productId == 0) return;
-
-
             EnsureId(ref counter, productId);
 
-            float frequency = 60f / (float)(miner.period / 600000.0);
-            float speed = (float)(0.0001 * miner.speed * miningSpeedScale);
-
-            float production = 0f;
-            if (minerType == EMinerType.Water)
+            var frequency = 60f / (float)(miner.period / 600000.0);
+            var speed = (float)(0.0001 * miner.speed * miningSpeedScale);
+            var production = 0f;
+            switch (miner.type)
             {
-                production = frequency * speed;
+                case EMinerType.Water:
+                    production = frequency * speed;
+                    break;
+                case EMinerType.Oil:
+                    production = frequency * speed * (float)(veinPool[veinId].amount * (double)VeinData.oilSpeedMultiplier);
+                    break;
+                case EMinerType.Vein:
+                    production = frequency * speed * miner.veinCount;
+                    break;
             }
-
-            if (minerType == EMinerType.Oil)
+            if (PluginConfig.minerOutputLimit.Value > 0.0f)
             {
-                production = frequency * speed * (float)(veinPool[veinId].amount * (double)VeinData.oilSpeedMultiplier);
+                var isStation = miner.entityId > 0 && planetFactory.entityPool[miner.entityId].stationId > 0;
+                if (!isStation && PluginConfig.minerOutputLimit.Value < production)
+                {
+                    production = PluginConfig.minerOutputLimit.Value;
+                }
             }
-
-            if (minerType == EMinerType.Vein)
-            {
-                production = frequency * speed * miner.veinCount;
-            }
-
 
             counter[productId].production += production;
             counter[productId].producers++;

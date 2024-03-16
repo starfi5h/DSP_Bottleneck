@@ -663,13 +663,14 @@ namespace Bottleneck
             int beltMaxStack = ResearchTechHelper.GetMaxPilerStackingUnlocked();
             var factorySystem = planetFactory.factorySystem;
             var veinPool = planetFactory.planet.factory.veinPool;
+            var waterItemId = planetFactory.planet.waterItemId;
             for (int i = 1; i < factorySystem.minerCursor; i++)
             {
                 ref var miner = ref factorySystem.minerPool[i];
                 if (i != miner.id) continue;
                 if (!planetUsage)
                 {
-                    BetterStats.RecordMinerStats(miner.type, miner, veinPool, planetFactory.planet.waterItemId);
+                    BetterStats.RecordMinerStats(miner, planetFactory, waterItemId);
                     continue;
                 }
                 var productId = miner.productId;
