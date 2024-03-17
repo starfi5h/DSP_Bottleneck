@@ -189,16 +189,23 @@ namespace Bottleneck.Stats
             }
         }
 
-        private static string FormatMetric(float value)
+        private static string FormatMetric(float value, bool skipFraction = false)
         {
             if (value >= 1000000.0)
                 return (value / 1000000).ToString("F2") + " M";
             if (value >= 10000.0)
                 return (value / 1000).ToString("F2") + " k";
-            if (value > 1000.0)
+
+            var fraction = value - (int)value;
+
+            if (value >= 1000.0 || (skipFraction && fraction < 0.0001))
                 return value.ToString("F0");
-            if (value > 0.0)
+            if (value >= 100.0)
                 return value.ToString("F1");
+            if (value >= 1.0)
+                return value.ToString("F2");
+            if (value > 0.0)
+                return value.ToString("F3");
             return value.ToString();
         }
 
@@ -573,9 +580,6 @@ namespace Bottleneck.Stats
 
             bool isTotalTimeWindow = __instance.productionStatWindow.timeLevel == 5;
 
-            string originalProductText = __instance.productText.text.Trim();
-            string originalConsumeText = __instance.consumeText.text.Trim();
-
             float lvDivisor = isTotalTimeWindow ? 1f : (float)__instance.lvDivisors[__instance.productionStatWindow.timeLevel];
             float originalProductValue = __instance.entryData.production / lvDivisor;
             float originalConsumeValue = __instance.entryData.consumption / lvDivisor;
@@ -600,10 +604,8 @@ namespace Bottleneck.Stats
                 {
                     originalProductValue /= divider;
                     originalConsumeValue /= divider;
-
-
-                    originalProductText = $"{FormatMetric(originalProductValue)}";
-                    originalConsumeText = $"{FormatMetric(originalConsumeValue)}";
+                    __instance.productText.text = FormatMetric(originalProductValue);
+                    __instance.consumeText.text = FormatMetric(originalConsumeValue);
                 }
             }
 
@@ -616,8 +618,8 @@ namespace Bottleneck.Stats
             {
                 float maxProductValue = productMetrics.production / divider;
                 float maxConsumeValue = productMetrics.consumption / divider;
-                maxProduction = FormatMetric(maxProductValue);
-                maxConsumption = FormatMetric(maxConsumeValue);
+                maxProduction = FormatMetric(maxProductValue, true);
+                maxConsumption = FormatMetric(maxConsumeValue, true);
 
                 producers = productMetrics.producers.ToString();
                 consumers = productMetrics.consumers.ToString();
@@ -628,9 +630,6 @@ namespace Bottleneck.Stats
                 if (maxConsumeValue > (maxProductValue * PluginConfig.consumptionToProductionRatioTrigger.Value))
                     warnOnHighMaxConsumption = true;
             }
-
-            __instance.productText.text = $"{originalProductText}";
-            __instance.consumeText.text = $"{originalConsumeText}";
 
             enhancement.maxProductionValue.text = maxProduction;
             enhancement.maxConsumptionValue.text = maxConsumption;
