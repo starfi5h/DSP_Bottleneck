@@ -174,7 +174,8 @@ namespace Bottleneck.Nebula
             else if (astroFilter % 100 > 0)
             {
                 PlanetData planetData = GameMain.data.galaxy.PlanetById(astroFilter);
-                action(planetData.factory);
+                if (planetData != null)
+                    action(planetData.factory);
             }
             else if (astroFilter % 100 == 0)
             {

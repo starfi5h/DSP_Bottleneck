@@ -670,6 +670,7 @@ namespace Bottleneck.Stats
 
         public static void AddPlanetFactoryData(PlanetFactory planetFactory)
         {
+            if (planetFactory == null) return;
             var factorySystem = planetFactory.factorySystem;
             var transport = planetFactory.transport;
             var veinPool = planetFactory.planet.factory.veinPool;

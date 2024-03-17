@@ -104,7 +104,8 @@ namespace Bottleneck
             else if (uiStatsWindow.astroFilter % 100 > 0)
             {
                 PlanetData planetData = uiStatsWindow.gameData.galaxy.PlanetById(uiStatsWindow.astroFilter);
-                AddPlanetFactoryData(planetData.factory, false);
+                if (planetData != null)
+                    AddPlanetFactoryData(planetData.factory, false);
             }
             else if (uiStatsWindow.astroFilter % 100 == 0)
             {
@@ -658,6 +659,7 @@ namespace Bottleneck
 
         public void AddPlanetFactoryData(PlanetFactory planetFactory, bool planetUsage)
         {
+            if (planetFactory == null) return;
             int beltMaxStack = ResearchTechHelper.GetMaxPilerStackingUnlocked();
             var factorySystem = planetFactory.factorySystem;
             var veinPool = planetFactory.planet.factory.veinPool;
