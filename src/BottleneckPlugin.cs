@@ -15,7 +15,6 @@ namespace Bottleneck
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     [BepInDependency("dsp.nebula-multiplayer-api", BepInDependency.DependencyFlags.SoftDependency)]
-
     public class BottleneckPlugin : BaseUnityPlugin
     {
         public static BottleneckPlugin Instance => instance;
@@ -180,7 +179,8 @@ namespace Bottleneck
             _uiElements.Clear();
         }
 
-        [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow.ValueToAstroBox)), HarmonyPriority(Priority.Low)]
+        [HarmonyPrefix, HarmonyPriority(Priority.Low)]
+        [HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow.ValueToAstroBox))]
         public static void UIStatisticsWindow__ValueToAstroBox_Postfix(UIStatisticsWindow __instance)
         {
             if (!__instance.isStatisticsTab || NebulaCompat.IsClient)
@@ -255,13 +255,15 @@ namespace Bottleneck
             }
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow._OnClose)), HarmonyPriority(Priority.Low)]
+        [HarmonyPostfix, HarmonyPriority(Priority.Low)]
+        [HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow._OnClose))]
         public static void UIStatisticsWindow__OnClose_Postfix()
         {
             BetterStats.UIStatisticsWindow__OnClose_Postfix();
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), "_OnOpen"), HarmonyPriority(Priority.Low)]
+        [HarmonyPostfix, HarmonyPriority(Priority.Low)]
+        [HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow._OnOpen))]
         public static void UIStatisticsWindow__OnOpen_Postfix(UIStatisticsWindow __instance)
         {
             BetterStats.UIStatisticsWindow__OnOpen_Postfix(__instance);
@@ -275,13 +277,15 @@ namespace Bottleneck
             }
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow.OnTabButtonClick))]
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow.OnTabButtonClick))]
         public static void UIStatisticsWindow_OnTabButtonClick_Postfix(UIStatisticsWindow __instance)
         {
             BetterStats.UIStatisticsWindow_OnTabButtonClick_Postfix(__instance);
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIProductEntryList), "FilterEntries")]
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UIProductEntryList), nameof(UIProductEntryList.FilterEntries))]
         public static void UIProductEntryList_FilterEntries_Postfix(UIProductEntryList __instance)
         {
             if (BetterStats.filterStr != "")
@@ -294,7 +298,8 @@ namespace Bottleneck
             instance.FilterEntries(__instance);
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIKillEntryList), nameof(UIKillEntryList.FilterEntries))]
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(UIKillEntryList), nameof(UIKillEntryList.FilterEntries))]
         public static void UIKillEntryList_FilterEntries_Postfix(UIKillEntryList __instance)
         {
             if (BetterStats.filterStr != "")
@@ -303,7 +308,8 @@ namespace Bottleneck
             }
         }
 
-        [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow._OnUpdate))]
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow._OnUpdate))]
         public static void UIStatisticsWindow__OnUpdate_Prefix(UIStatisticsWindow __instance)
         {
             BetterStats.UIStatisticsWindow__OnUpdate_Prefix(__instance);
@@ -327,7 +333,8 @@ namespace Bottleneck
             }
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIProductEntry), "_OnUpdate"), HarmonyPriority(Priority.Low)]
+        [HarmonyPostfix, HarmonyPriority(Priority.Low)]
+        [HarmonyPatch(typeof(UIProductEntry), nameof(UIProductEntry._OnUpdate))]
         public static void UIProductEntry__OnUpdate_Postfix(UIProductEntry __instance)
         {
             BetterStats.UIProductEntry__OnUpdate_Postfix(__instance);
@@ -335,13 +342,15 @@ namespace Bottleneck
                 instance.OnUpdate(__instance);
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(UIKillEntry), nameof(UIKillEntry._OnUpdate)), HarmonyPriority(Priority.Low)]
+        [HarmonyPostfix, HarmonyPriority(Priority.Low)]
+        [HarmonyPatch(typeof(UIKillEntry), nameof(UIKillEntry._OnUpdate))]
         public static void UIKillEntry__OnUpdate_Postfix(UIKillEntry __instance)
         {
             BetterStats.UIKillEntry__OnUpdate_Postfix(__instance);
         }
 
-        [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow.ComputeDisplayProductEntries))]
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow.ComputeDisplayProductEntries))]
         public static void UIProductionStatWindow_ComputeDisplayEntries_Prefix(UIStatisticsWindow __instance)
         {
             if (__instance == null)

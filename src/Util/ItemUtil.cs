@@ -6,8 +6,9 @@ namespace Bottleneck.Util
 {
     public static class ItemUtil
     {
-        private static Dictionary<int, List<int>> _itemPrecursorCache = new();
-        private static Dictionary<int, List<int>> _itemSuccessorCache = new();
+        private static readonly Dictionary<int, List<int>> _itemPrecursorCache = new();
+        private static readonly Dictionary<int, List<int>> _itemSuccessorCache = new();
+        private static readonly ConcurrentDictionary<int, string> _recipeNames = new();
 
         public static List<int> DirectPrecursorItems(int itemId)
         {
@@ -73,7 +74,6 @@ namespace Bottleneck.Util
             return DirectSuccessorItems(productId).Count > 0;
         }
 
-        private static ConcurrentDictionary<int, string> _recipeNames = new();
         public static string GetRecipeName(int recipeId)
         {
             if (_recipeNames.TryGetValue(recipeId, out string nm))
