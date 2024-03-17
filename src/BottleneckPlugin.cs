@@ -275,6 +275,12 @@ namespace Bottleneck
             }
         }
 
+        [HarmonyPostfix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow.OnTabButtonClick))]
+        public static void UIStatisticsWindow_OnTabButtonClick_Postfix(UIStatisticsWindow __instance)
+        {
+            BetterStats.UIStatisticsWindow_OnTabButtonClick_Postfix(__instance);
+        }
+
         [HarmonyPostfix, HarmonyPatch(typeof(UIProductEntryList), "FilterEntries")]
         public static void UIProductEntryList_FilterEntries_Postfix(UIProductEntryList __instance)
         {
@@ -288,6 +294,14 @@ namespace Bottleneck
             instance.FilterEntries(__instance);
         }
 
+        [HarmonyPostfix, HarmonyPatch(typeof(UIKillEntryList), nameof(UIKillEntryList.FilterEntries))]
+        public static void UIKillEntryList_FilterEntries_Postfix(UIKillEntryList __instance)
+        {
+            if (BetterStats.filterStr != "")
+            {
+                BetterStats.UIKillEntryList_FilterEntries_Postfix(__instance);
+            }
+        }
 
         [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow._OnUpdate))]
         public static void UIStatisticsWindow__OnUpdate_Prefix(UIStatisticsWindow __instance)
@@ -319,6 +333,12 @@ namespace Bottleneck
             BetterStats.UIProductEntry__OnUpdate_Postfix(__instance);
             if (!PluginConfig.statsOnly.Value)
                 instance.OnUpdate(__instance);
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(UIKillEntry), nameof(UIKillEntry._OnUpdate)), HarmonyPriority(Priority.Low)]
+        public static void UIKillEntry__OnUpdate_Postfix(UIKillEntry __instance)
+        {
+            BetterStats.UIKillEntry__OnUpdate_Postfix(__instance);
         }
 
         [HarmonyPrefix, HarmonyPatch(typeof(UIStatisticsWindow), nameof(UIStatisticsWindow.ComputeDisplayProductEntries))]

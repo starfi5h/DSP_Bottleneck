@@ -359,13 +359,34 @@ namespace Bottleneck.Stats
                 statWindow = __instance;
             }
 
-            if (chxGO != null) return;
-
-            var favoritesLabel = GameObject.Find("UI Root/Overlay Canvas/In Game/Windows/Statistics Window/product-bg/top/favorite-text");
-            if (favoritesLabel != null)
+            if (chxGO == null)
             {
-                favoritesLabel.SetActive(false);
+                CreateObjects(__instance);
             }
+            UIStatisticsWindow_OnTabButtonClick_Postfix(__instance);
+        }
+
+        public static void UIStatisticsWindow_OnTabButtonClick_Postfix(UIStatisticsWindow __instance)
+        {
+            if (chxGO == null || filterGO == null) return;
+
+            if (__instance.isProductionTab)
+            {
+                chxGO.transform.SetParent(__instance.productSortBox.transform.parent, false);
+                filterGO.transform.SetParent(__instance.productSortBox.transform.parent, false);
+            }
+            else if (__instance.isKillTab)
+            {
+                chxGO.transform.SetParent(__instance.killSortBox.transform.parent, false);
+                filterGO.transform.SetParent(__instance.killSortBox.transform.parent, false);
+            }
+        }
+        private static void CreateObjects(UIStatisticsWindow __instance)
+        {
+            var favoritesLabel = GameObject.Find("UI Root/Overlay Canvas/In Game/Windows/Statistics Window/product-bg/top/favorite-text");
+            if (favoritesLabel != null) favoritesLabel.SetActive(false);
+            favoritesLabel = GameObject.Find("UI Root/Overlay Canvas/In Game/Windows/Statistics Window/kill-bg/top/favorite-text");
+            if (favoritesLabel != null) favoritesLabel.SetActive(false);
 
             sprOn = Sprite.Create(texOn, new Rect(0, 0, texOn.width, texOn.height), new Vector2(0.5f, 0.5f));
             sprOff = Sprite.Create(texOff, new Rect(0, 0, texOff.width, texOff.height), new Vector2(0.5f, 0.5f));
@@ -479,7 +500,14 @@ namespace Bottleneck.Stats
                     filterStr = value;
                 }
 
-                __instance.ComputeDisplayProductEntries();
+                if (__instance.isProductionTab)
+                {
+                    __instance.ComputeDisplayProductEntries();
+                }
+                else if (__instance.isKillTab)
+                {
+                    __instance.ComputeDisplayKillEntries();
+                }
             });
             // taken from thecodershome's PR on github: https://github.com/DysonSphereMod/QOL/pull/128
             _inputField.onEndEdit.AddListener(value =>
@@ -509,6 +537,21 @@ namespace Bottleneck.Stats
             }
         }
 
+        public static void UIKillEntryList_FilterEntries_Postfix(UIKillEntryList __instance)
+        {
+            if (filterStr == "") return;
+            var uiKillEntryList = __instance;
+            for (int kIndex = uiKillEntryList.entryDatasCursor - 1; kIndex >= 0; --kIndex)
+            {
+                var entryData = uiKillEntryList.entryDatas[kIndex];
+                var proto = LDB.models.Select(entryData.modelId);
+                if (proto.displayName.IndexOf(filterStr, StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    uiKillEntryList.Swap(kIndex, uiKillEntryList.entryDatasCursor - 1);
+                    --uiKillEntryList.entryDatasCursor;
+                }
+            }
+        }
         public static void UIStatisticsWindow__OnUpdate_Prefix(UIStatisticsWindow __instance)
         {
             if (statWindow == null)
@@ -604,6 +647,26 @@ namespace Bottleneck.Stats
             if (warnOnHighMaxConsumption && !isTotalTimeWindow)
                 enhancement.maxConsumptionValue.color = new Color(1f, 1f, .25f, .5f);
             enhancement.proliferatorOperationSetting?.UpdateItemId(__instance.entryData.itemId);
+        }
+
+        public static void UIKillEntry__OnUpdate_Postfix(UIKillEntry __instance)
+        {
+            if (__instance.productionStatWindow == null || !__instance.productionStatWindow.isKillTab) return;
+
+            var timeLevel = __instance.productionStatWindow.timeLevel;
+            if (timeLevel >= 5) return; // total time window
+            
+            if (PluginConfig.displayPerSecond.Value)
+            {
+                // Modify from UIKillEntry.ShowInText
+                var originalValue = __instance.entryData.kill / (float)__instance.lvDivisors[timeLevel];
+                __instance.killText.text = FormatMetric(originalValue / 60.0f);
+                __instance.killUnitLabel.text = Strings.PerSecLabel;
+            }
+            else
+            {
+                __instance.killUnitLabel.text = Strings.PerMinLabel;
+            }
         }
 
         // statsOnly
