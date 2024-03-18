@@ -1,5 +1,10 @@
 ## Changelog
 
+### v1.1.2
+* Add: config `Ejector Speed Factor`, `Silo Speed Factor`, `Miner Output Limit`
+* Add: filter and display per second in killtab.
+* Change: refine decimal place in rate numbers.
+
 ### v1.1.1
 * Update: Adpat NebulaAPIv2.0.0.  
 

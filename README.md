@@ -16,7 +16,6 @@ only the precursor (or dependent) items to narrow down the search for bottleneck
 This plugin contains a fork of BetterStats with support for Proliferator. To use it,
 you'll have to disable the actual BetterStats plugin, unfortunately. The forked BetterStats
 is completely optional, the Bottleneck plugin should work just fine when BetterStats is installed, the proliferator enhancements just won't be present.
-_Note: If brokenmass [merges the changes](https://github.com/DysonSphereMod/QOL/pull/125) into BetterStats then this fork will go away_
 
 For production items that can be proliferated, buttons are added next to each item where you can choose between:
 
@@ -29,7 +28,101 @@ For production items that can be proliferated, buttons are added next to each it
 
 ## Config
 
-* ProductionPlanetCount allows showing more "Produced on" planets in tooltip (max 15)
+The config file can be found in `BepInEx\config\Bottleneck.cfg` after the mod load for the first time.  
+If you're using mod manager, you can find the file in Config editor.  
+
+```
+## Settings file was created by plugin Bottleneck
+## Plugin GUID: Bottleneck
+
+[General]
+
+## Number of production planets to show. Too many and tip gets very large
+# Setting type: Int32
+# Default value: 5
+# Acceptable value range: From 2 to 35
+ProductionPlanetCount = 5
+
+## Disable to show only the direct consumers or producers. When enabled one extra level of consumer/producer will be included in results
+# Setting type: Boolean
+# Default value: true
+Include Second Level Items = true
+
+## Suppress item tooltip in stats window
+# Setting type: Boolean
+# Default value: false
+Disable Item Hover Tip = false
+
+## When planets with too little power are detected a message will be popped up (once per session)
+# Setting type: Boolean
+# Default value: true
+PopupLowPowerWarnings = true
+
+## When precursor/consumer filter is active filter planet list to only ones that produce/consume selected item
+# Setting type: Boolean
+# Default value: true
+Planet Filter = true
+
+## When planet filter is active include star systems item in list (requires Planet Filter enabled)
+# Setting type: Boolean
+# Default value: true
+System Filter = true
+
+## When consumption rises above the given ratio of max production, flag the text in red. (e.g. if set to '0.9' then you will be warned if you consume more than 90% of your max production)
+# Setting type: Single
+# Default value: 1
+lackOfProductionRatio = 1
+
+## If max consumption raises above the given max production ratio, flag the text in red. (e.g. if set to '1.5' then you will be warned if your max consumption is more than 150% of your max production)
+# Setting type: Single
+# Default value: 1.5
+consumptionToProductionRatio = 1.5
+
+## Used by UI to persist the last selected value for checkbox
+# Setting type: Boolean
+# Default value: false
+displayPerSecond = false
+
+
+[Stats]
+
+## Disable Bottleneck functionality, use only BetterStats features
+# Setting type: Boolean
+# Default value: false
+Disable Bottleneck = false
+
+## Overwrite the maximum cargo stacking level. By default it uses the vanilla limit (4)
+# Setting type: Int32
+# Default value: -1
+Overwrite Stacking Level = -1
+
+## Overwrite the maximum proliferator level. By default it uses the highest proliferator unlocked
+# Setting type: Int32
+# Default value: -1
+Overwrite Proliferator Level = -1
+
+## Tells mod to ignore proliferator points completely. Can cause production rates to exceed theoretical max values
+# Setting type: Boolean
+# Default value: false
+Disable Proliferator Calculation = false
+
+## EM-Rail Ejector speed multiplier. Set this value to 2.0 when feeding proliferated sails.
+# Setting type: Single
+# Default value: 1
+Ejector Speed Factor = 1
+
+## Vertical Launching Silo speed multiplier. Set this value to 2.0 when feeding proliferated rockets.
+# Setting type: Single
+# Default value: 1
+Silo Speed Factor = 1
+
+## Maximum output limit (/min) of Mining Machine, Water Pump or Oil Extractor. Default value (0) is no limit
+# Setting type: Single
+# Default value: 0
+Miner Output Limit = 0
+```
+
+* ProductionPlanetCount allows showing more "Produced on" planets in tooltip (max 35)
 * 'Disable Bottleneck' lets you disable the Bottleneck functionality of this mod and just focus on stats
 * 'Disable Proliferator Calculation' removes Proliferator from Theoretical max calculations completely
 * 'Planet Filter' removes non-production (or non-consumption) planets from list when a precursor/consumer item filter is active
