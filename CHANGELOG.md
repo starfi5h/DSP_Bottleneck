@@ -1,5 +1,9 @@
 ## Changelog
 
+### v1.1.3
+* Add: config `Font Size - Value`  
+* Add: precursor/successor button now can click again to clear filter   
+
 ### v1.1.2
 * Add: config `Ejector Speed Factor`, `Silo Speed Factor`, `Miner Output Limit`
 * Add: filter and display per second in killtab.

@@ -78,12 +78,6 @@ lackOfProductionRatio = 1
 # Default value: 1.5
 consumptionToProductionRatio = 1.5
 
-## Used by UI to persist the last selected value for checkbox
-# Setting type: Boolean
-# Default value: false
-displayPerSecond = false
-
-
 [Stats]
 
 ## Disable Bottleneck functionality, use only BetterStats features
@@ -120,6 +114,18 @@ Silo Speed Factor = 1
 # Setting type: Single
 # Default value: 0
 Miner Output Limit = 0
+
+[UI]
+
+## Used by UI to persist the last selected value for checkbox
+# Setting type: Boolean
+# Default value: false
+displayPerSecond = false
+
+## Font size of the value text in UIProductEntry. Vanilla font size is 34
+# Setting type: Int32
+# Default value: 28
+Font Size - Value = 28
 ```
 
 * ProductionPlanetCount allows showing more "Produced on" planets in tooltip (max 35)
