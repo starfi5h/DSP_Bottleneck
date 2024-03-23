@@ -8,7 +8,6 @@ namespace Bottleneck
         public static ConfigEntry<bool> popupLowPowerWarnings;
         public static ConfigEntry<float> lackOfProductionRatioTrigger;
         public static ConfigEntry<float> consumptionToProductionRatioTrigger;
-        public static ConfigEntry<bool> displayPerSecond;
         public static ConfigEntry<bool> statsOnly;
         public static ConfigEntry<bool> planetFilter;
         public static ConfigEntry<bool> systemFilter;
@@ -20,6 +19,8 @@ namespace Bottleneck
         public static ConfigEntry<float> ejectorSpeedFactor;
         public static ConfigEntry<float> siloSpeedFactor;
         public static ConfigEntry<float> minerOutputLimit;
+        public static ConfigEntry<bool> displayPerSecond;
+        public static ConfigEntry<int> fontSizeValue;
 
 
         public static void InitConfig(ConfigFile confFile)
@@ -42,8 +43,6 @@ namespace Bottleneck
             consumptionToProductionRatioTrigger = confFile.Bind("General", "consumptionToProductionRatio", 1.5f, //
                 "If max consumption raises above the given max production ratio, flag the text in red." +//
                 " (e.g. if set to '1.5' then you will be warned if your max consumption is more than 150% of your max production)");
-            displayPerSecond = confFile.Bind("General", "displayPerSecond", false,
-                "Used by UI to persist the last selected value for checkbox");
 
             statsOnly = confFile.Bind("Stats", "Disable Bottleneck", false,
                 "Disable Bottleneck functionality, use only BetterStats features");
@@ -59,6 +58,11 @@ namespace Bottleneck
                 "Vertical Launching Silo speed multiplier. Set this value to 2.0 when feeding proliferated rockets.");
             minerOutputLimit = confFile.Bind("Stats", "Miner Output Limit", 0.0f,
                 "Maximum output limit (/min) of Mining Machine, Water Pump or Oil Extractor. Default value (0) is no limit");
+
+            displayPerSecond = confFile.Bind("UI", "displayPerSecond", false,
+                "Used by UI to persist the last selected value for checkbox");
+            fontSizeValue = confFile.Bind("UI", "Font Size - Value", 28,
+                "Font size of the value text in UIProductEntry. Vanilla font size is 34");
         }
     }
 }

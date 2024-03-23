@@ -345,6 +345,16 @@ namespace Bottleneck.Stats
 
             enhancements.Add(__instance, enhancement);
 
+            if (PluginConfig.fontSizeValue.Value > 0)
+            {
+                __instance.productText.fontSize
+                    = __instance.consumeText.fontSize
+                    = enhancement.counterProductionValue.fontSize
+                    = enhancement.counterConsumptionValue.fontSize
+                    = enhancement.maxProductionValue.fontSize
+                    = enhancement.maxConsumptionValue.fontSize = PluginConfig.fontSizeValue.Value;
+            }
+
             return enhancement;
         }
 
