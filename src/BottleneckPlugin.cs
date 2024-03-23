@@ -17,6 +17,8 @@ namespace Bottleneck
     [BepInDependency("dsp.nebula-multiplayer-api", BepInDependency.DependencyFlags.SoftDependency)]
     public class BottleneckPlugin : BaseUnityPlugin
     {
+        public const string PLUGIN_GUID = "Bottleneck";
+
         public static BottleneckPlugin Instance => instance;
         private Harmony _harmony;
         private static BottleneckPlugin instance;
@@ -59,6 +61,10 @@ namespace Bottleneck
             {
                 NebulaCompat.Init(_harmony);
             }
+
+#if DEBUG
+            Strings.ApplyLanguageChange();
+#endif
         }
 
         public void ProcessMadeOnTask()
@@ -521,7 +527,7 @@ namespace Bottleneck
 
         private BottleneckProductEntryElement EnhanceElement(UIProductEntry productEntry)
         {
-            var precursorButton = UI.Util.CopyButton(productEntry, productEntry.favoriteBtn1, new Vector2(120 + 47, 80), productEntry.entryData.itemId,
+            var precursorButton = UI.Util.CopyButton(productEntry, productEntry.favoriteBtn1, new Vector2(120 + 47, 60), productEntry.entryData.itemId,
                 _ => { UpdatePrecursorFilter(productEntry.entryData.itemId); }, _filterSprite);
 
             objsToDestroy.Add(precursorButton.gameObject);
@@ -541,6 +547,13 @@ namespace Bottleneck
 
         private void UpdatePrecursorFilter(int itemId, bool successor = false)
         {
+            if (_targetItemId == itemId && _successor == successor && _deficientOnlyMode == VFInput.control)
+            {
+                // If the input parameter is exactly the same, clear the filter
+                ClearFilter();
+                return;
+            }
+
             _itemFilter.Clear();
             _itemFilter.Add(itemId);
             _targetItemId = itemId;
