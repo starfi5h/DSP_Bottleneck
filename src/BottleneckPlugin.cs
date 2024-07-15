@@ -20,22 +20,23 @@ namespace Bottleneck
         public static BottleneckPlugin Instance => instance;
         private Harmony _harmony;
         private static BottleneckPlugin instance;
-        private GameObject _enablePrecursorGO;
-        private Image _precursorCheckBoxImage;
-        private static readonly Texture2D filterTexture = Resources.Load<Texture2D>("ui/textures/sprites/icons/filter-icon-16");
-        private GameObject _enablePrecursorTextGO;
-        private readonly HashSet<int> _itemFilter = new();
-        private readonly List<GameObject> objsToDestroy = new();
+        private BetterStats _betterStatsObj;
 
-        private readonly Dictionary<UIProductEntry, BottleneckProductEntryElement> _uiElements = new();
+        private readonly HashSet<int> _itemFilter = new();
         private int _targetItemId = -1;
         private static bool _successor;
         private bool _deficientOnlyMode;
-        private GameObject _textGo;
-        private Button _btn;
-        private Sprite _filterSprite;
-        private BetterStats _betterStatsObj;
 
+        // UI
+        private static readonly Texture2D filterTexture = Resources.Load<Texture2D>("ui/textures/sprites/icons/filter-icon-16");
+        private readonly Dictionary<UIProductEntry, BottleneckProductEntryElement> _uiElements = new();
+        private readonly List<GameObject> objsToDestroy = new();
+        private GameObject _enablePrecursorGO;
+        private Button _clearFilterBtn;
+        private GameObject _clearFilterTextGO;
+        private Sprite _filterSprite;
+        private Image _precursorCheckBoxImage;
+        private GameObject _enablePrecursorTextGO;
 
         private void Awake()
         {
@@ -67,15 +68,25 @@ namespace Bottleneck
             _targetItemId = -1;
             _productionLocations.Clear();
 
+            ClearUI();
+            _harmony.UnpatchSelf();
+            if (_betterStatsObj != null) Destroy(_betterStatsObj);
+
+            NebulaCompat.OnDestroy();
+        }
+#endif
+
+        private void ClearUI()
+        {
             if (_enablePrecursorGO != null)
             {
                 Destroy(_enablePrecursorTextGO);
                 Destroy(_enablePrecursorGO);
             }
 
-            if (_textGo != null)
+            if (_clearFilterTextGO != null)
             {
-                Destroy(_textGo);
+                Destroy(_clearFilterTextGO);
             }
 
             if (_precursorCheckBoxImage != null)
@@ -83,22 +94,9 @@ namespace Bottleneck
                 Destroy(_precursorCheckBoxImage.gameObject);
             }
 
-            if (_btn != null && _btn.gameObject != null)
-                Destroy(_btn.gameObject);
+            if (_clearFilterBtn != null && _clearFilterBtn.gameObject != null)
+                Destroy(_clearFilterBtn.gameObject);
 
-            Clear();
-            _harmony.UnpatchSelf();
-            if (_betterStatsObj != null)
-            {
-                Destroy(_betterStatsObj);
-            }
-
-            NebulaCompat.OnDestroy();
-        }
-#endif
-
-        private void Clear()
-        {
             foreach (var obj in objsToDestroy)
             {
                 Destroy(obj);
@@ -257,17 +255,17 @@ namespace Bottleneck
 
         private void UpdateButtonState()
         {
-            if (_btn == null || _btn.gameObject == null || _textGo == null)
+            if (_clearFilterBtn == null || _clearFilterBtn.gameObject == null || _clearFilterTextGO == null)
                 return;
             if (_targetItemId == -1)
             {
-                _btn.gameObject.SetActive(false);
-                _textGo.SetActive(false);
+                _clearFilterBtn.gameObject.SetActive(false);
+                _clearFilterTextGO.SetActive(false);
             }
             else
             {
-                _btn.gameObject.SetActive(true);
-                _textGo.SetActive(true);
+                _clearFilterBtn.gameObject.SetActive(true);
+                _clearFilterTextGO.SetActive(true);
             }
         }
 
@@ -448,10 +446,10 @@ namespace Bottleneck
             rect.pivot = new Vector2(0, 0.5f);
             rect.anchoredPosition = new Vector2(350, -33);
             objsToDestroy.Add(rect.gameObject);
-            _btn = rect.gameObject.AddComponent<Button>();
-            _btn.onClick.AddListener(ClearFilter);
+            _clearFilterBtn = rect.gameObject.AddComponent<Button>();
+            _clearFilterBtn.onClick.AddListener(ClearFilter);
 
-            _precursorCheckBoxImage = _btn.gameObject.AddComponent<Image>();
+            _precursorCheckBoxImage = _clearFilterBtn.gameObject.AddComponent<Image>();
             _precursorCheckBoxImage.color = new Color(0.8f, 0.8f, 0.8f, 1);
             _precursorCheckBoxImage.sprite = _filterSprite;
 
@@ -477,7 +475,7 @@ namespace Bottleneck
             Font fnt = Resources.Load<Font>("ui/fonts/SAIRASB");
             if (fnt != null)
                 text.font = fnt;
-            _textGo = text.gameObject;
+            _clearFilterTextGO = text.gameObject;
         }
 
     }
