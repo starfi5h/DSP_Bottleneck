@@ -61,7 +61,7 @@ namespace Bottleneck
 
             displayPerSecond = confFile.Bind("UI", "displayPerSecond", false,
                 "Used by UI to persist the last selected value for checkbox");
-            fontSizeValue = confFile.Bind("UI", "Font Size - Value", 28,
+            fontSizeValue = confFile.Bind("UI", "Font Size - Value", 26,
                 "Font size of the value text in UIProductEntry. Vanilla font size is 34");
         }
     }

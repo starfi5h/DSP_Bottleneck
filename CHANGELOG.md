@@ -1,5 +1,10 @@
 ## Changelog
 
+### v1.1.4
+* Bugfix: Fix nebula client doesn't send query when switching tabs.
+* Change: Config `Font Size` default value is set to 26.
+* Update: Slightly optimization. (0.10.30.22292)  
+
 ### v1.1.3
 * Add: config `Font Size - Value`  
 * Add: precursor/successor button now can click again to clear filter   

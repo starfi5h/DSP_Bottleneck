@@ -124,8 +124,8 @@ displayPerSecond = false
 
 ## Font size of the value text in UIProductEntry. Vanilla font size is 34
 # Setting type: Int32
-# Default value: 28
-Font Size - Value = 28
+# Default value: 26
+Font Size - Value = 26
 ```
 
 * ProductionPlanetCount allows showing more "Produced on" planets in tooltip (max 35)
