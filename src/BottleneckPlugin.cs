@@ -69,6 +69,7 @@ namespace Bottleneck
 
         public void ProcessMadeOnTask()
         {
+            isCalculating = true;
             _productionLocations.Clear();
             for (int i = 0; i < GameMain.data.factoryCount; i++)
             {
@@ -80,14 +81,8 @@ namespace Bottleneck
 
         private void ProcessDeficitTask()
         {
+            isCalculating = true;
             var uiStatsWindow = UIRoot.instance.uiGame.statWindow;
-            if (NebulaCompat.IsClient && uiStatsWindow.astroFilter != 0)
-            {
-                if (uiStatsWindow.astroFilter != NebulaCompat.LastAstroFilter)
-                    NebulaCompat.SendRequest(ERequest.Bottleneck);
-                return;
-            }
-
             ProductionDeficit.Clear();
             BetterStats.counter.Clear();
 
@@ -276,10 +271,10 @@ namespace Bottleneck
             if (instance.gameObject != null && !PluginConfig.statsOnly.Value)
             {
                 instance.AddEnablePrecursorFilterButton(__instance);
-                instance._enableMadeOn = false;
+                // If it is client, set UI tip enable to true so it doesn't wait on local calculation
+                instance._enableMadeOn = NebulaCompat.IsClient;
                 instance.IsFactoryDataDirty = true;
-                if (NebulaCompat.IsClient)
-                    NebulaCompat.SendRequest(ERequest.Open);
+                NebulaCompat.OnWindowOpen();
             }
         }
 
@@ -372,6 +367,19 @@ namespace Bottleneck
         private void RecordEntryData(UIStatisticsWindow uiStatsWindow)
         {
             //bool planetUsageMode = Time.frameCount % 500 == 0;
+            if (NebulaCompat.IsClient && uiStatsWindow.astroFilter != lastAstroFilter)
+            {
+                if (!_enableMadeOn)
+                {
+                    _productionLocations.Clear();
+                    _enableMadeOn = true;
+                    return;
+                }
+                lastAstroFilter = uiStatsWindow.astroFilter;
+                if (uiStatsWindow.astroFilter != NebulaCompat.LastAstroFilter)
+                    NebulaCompat.SendRequest(ERequest.Bottleneck);
+                return;
+            }
             if (isCalculating) return;
 
             if (!_enableMadeOn)

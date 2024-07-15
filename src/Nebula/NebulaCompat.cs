@@ -14,7 +14,7 @@ namespace Bottleneck.Nebula
     {
         public static bool IsMultiplayerActive { get; private set; }
         public static bool IsClient { get; private set; }
-        public static int LastAstroFilter { get; private set; }
+        public static int LastAstroFilter { get; private set; } = -2;
 
         public static void Init(Harmony _)
         {
@@ -59,20 +59,31 @@ namespace Bottleneck.Nebula
             IsClient = false;
         }
 
+        public static void OnWindowOpen()
+        {
+            LastAstroFilter = 0; // local planet
+            if (IsClient)
+                SendRequest(ERequest.Open);
+        }
+
         public static void SendRequest(ERequest request)
         {
             int astroFilter = UIRoot.instance.uiGame.statWindow.astroFilter;
             if (astroFilter == 0)
-                return;
+            {
+                // 0: Try to convert to astroId of local planet
+                if (GameMain.localPlanet == null) return;
+                astroFilter = GameMain.localPlanet.astroId;
+            }
             NebulaModAPI.MultiplayerSession.Network.SendPacket(new Bottleneck_Request(request, astroFilter));
-            Log.Debug($"{request} {astroFilter}");
+            Log.Debug($"SendRequest {request} {astroFilter}");
             LastAstroFilter = astroFilter;
         }
 
         public static void SendEntryRequest(int productId, bool isPrecursor)
         {
             NebulaModAPI.MultiplayerSession.Network.SendPacket(new Bottleneck_EntryRequest(productId, isPrecursor));
-            Log.Debug($"{productId} {isPrecursor}");
+            Log.Debug($"SendEntryRequest{productId} {isPrecursor}");
         }
     }
 
