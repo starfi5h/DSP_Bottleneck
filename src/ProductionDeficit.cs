@@ -13,6 +13,7 @@ namespace Bottleneck
         public string RecipeName { get; set; }
         public int AssemblerCount { get; set; }
         public int LackingPowerCount { get; set; }
+        public int JammedCount { get; set; }
 
         private readonly int[] needed = new int[10];
         private readonly int[] assemblersNeedingCount = new int[10];
@@ -21,26 +22,31 @@ namespace Bottleneck
         private readonly int[] inputItemId = new int[10];
         private readonly Dictionary<int, int> inputItemIndex = new();
         private int neededCount;
-        public int jammedCount;
+        private const double Threshold = 0.01;
 
         private static readonly Dictionary<int, Dictionary<int, ProductionDeficitItem>> _byItemByRecipeId = new();
         private static readonly Dictionary<int, ProductionDeficitItem> _byItemOnly = new();
 
         public void AddNeeded(int itemId, int count)
         {
-            if (inputItemIndex.ContainsKey(itemId))
+            if (inputItemIndex.TryGetValue(itemId, out int index))
             {
-                needed[inputItemIndex[itemId]] += count;
-                assemblersNeedingCount[inputItemIndex[itemId]]++;
+                needed[index] += count;
+                assemblersNeedingCount[index]++;
             }
         }
 
-        public (string neededStr, string stackStr, string unpoweredStr, string unsprayStr) TopNeeded(int outputProductId)
+        public void AddMissingSpray(int inputItem, int count)
         {
-            if (AssemblerCount < 1)
+            if (inputItemIndex.ContainsKey(inputItem))
             {
-                return ("", "", "", "");
+                assemblersMissingSprayCount[inputItemIndex[inputItem]] += count;
             }
+        }
+
+        public (string neededStr, string stackStr, string unpoweredStr, string unsprayStr) GetTopNeeded(int outputProductId)
+        {
+            if (AssemblerCount < 1) return ("", "", "", "");
 
             var neededMax = int.MinValue;
             var neededName = "";
@@ -69,20 +75,21 @@ namespace Bottleneck
                 }
             }
 
-            var percent = (double)assemblerNeedingCount / AssemblerCount;
-            var stackingPercent = (double)jammedCount / AssemblerCount;
-            var neededStr = percent < 0.01 ? "" : $"{neededName} {percent:P2}";
-            var stackingStr = stackingPercent < 0.01 ? "" : $"{stackingPercent:P2}";
+            var needingPercent = (double)assemblerNeedingCount / AssemblerCount;
+            var stackingPercent = (double)JammedCount / AssemblerCount;
             var unpoweredPercent = (double)LackingPowerCount / AssemblerCount;
-            var unpoweredstr = unpoweredPercent < 0.01 ? "" : $"{unpoweredPercent:P2}";
             var unsprayedPercent = (double)missingSprayCount / AssemblerCount;
-            var missingSprayStr = (double)missingSprayCount > 0.01 ? $"{missingSprayName} {unsprayedPercent:P2}" : "";
-            if (secondNeededName.Length > 0 && (double)secondAssemblerNeedingCount / AssemblerCount > 0.01)
-            {
-                return ($"{neededStr} (2nd: {secondNeededName})".Trim(), $"{stackingStr}".Trim(), unpoweredstr, missingSprayStr);
-            }
 
-            return ( $"{neededStr}".Trim(), $"{stackingStr}".Trim(), unpoweredstr, missingSprayStr );
+            var neededStr = needingPercent < Threshold ? "" : $"{neededName} {needingPercent:P2}";
+            var stackingStr = stackingPercent < Threshold ? "" : $"{stackingPercent:P2}";
+            var unpoweredStr = unpoweredPercent < Threshold ? "" : $"{unpoweredPercent:P2}";
+            var missingSprayStr = missingSprayCount > Threshold ? $"{missingSprayName} {unsprayedPercent:P2}" : "";
+
+            if (!string.IsNullOrEmpty(secondNeededName) && (double)secondAssemblerNeedingCount / AssemblerCount > Threshold)
+            {
+                neededStr = $"{neededStr} (2nd: {secondNeededName})".Trim();
+            }
+            return (neededStr.Trim(), stackingStr.Trim(), unpoweredStr, missingSprayStr);
         }
 
         public HashSet<int> NeededItems()
@@ -105,24 +112,16 @@ namespace Bottleneck
             return result;
         }
 
-        public static List<ProductionDeficitItem> ForItemId(int itemId)
+        public static List<ProductionDeficitItem> GetItemsById(int itemId)
         {
-            if (!_byItemByRecipeId.ContainsKey(itemId))
-            {
-                if (_byItemOnly.ContainsKey(itemId))
-                {
-                    return new List<ProductionDeficitItem> { _byItemOnly[itemId] };
-                }
-                return new List<ProductionDeficitItem>();
-            }
-
-            return _byItemByRecipeId[itemId].Values.ToList();
+            return _byItemByRecipeId.TryGetValue(itemId, out var recipes)
+                ? recipes.Values.ToList()
+                : (_byItemOnly.TryGetValue(itemId, out var item) ? new List<ProductionDeficitItem> { item } : new List<ProductionDeficitItem>());
         }
 
         public static ProductionDeficitItem FromItem(int inputItemId, int outputItemId)
         {
-            _byItemOnly.TryGetValue(outputItemId, out ProductionDeficitItem item);
-            if (item == null)
+            if (!_byItemOnly.TryGetValue(outputItemId, out ProductionDeficitItem item))
             {
                 _byItemOnly[outputItemId] = item = new ProductionDeficitItem();
             }
@@ -134,17 +133,15 @@ namespace Bottleneck
             return item;
         }
 
-        public static ProductionDeficitItem FromItem(int itemId, AssemblerComponent assemblerComponent)
+        public static ProductionDeficitItem FromItem(int itemId, in AssemblerComponent assemblerComponent)
         {
             var recipeId = assemblerComponent.recipeId;
-            _byItemByRecipeId.TryGetValue(itemId, out Dictionary<int, ProductionDeficitItem> byRecipe);
-            if (byRecipe == null)
+            if (!_byItemByRecipeId.TryGetValue(itemId, out var byRecipe))
             {
                 _byItemByRecipeId[itemId] = byRecipe = new Dictionary<int, ProductionDeficitItem>();
             }
 
-            byRecipe.TryGetValue(recipeId, out ProductionDeficitItem value);
-            if (value == null)
+            if (!byRecipe.TryGetValue(recipeId, out ProductionDeficitItem value))
             {
                 var requiresLength = assemblerComponent.requires?.Length;
                 var requires = requiresLength ?? 0;
@@ -161,24 +158,22 @@ namespace Bottleneck
                         value.inputItemId[i] = requiredItem.ID;
                         value.inputItemIndex[assemblerComponent.requires[i]] = i;
                     }
-                
+
                 byRecipe[recipeId] = value;
             }
 
             return value;
         }
 
-        public static ProductionDeficitItem FromItem(int itemId, LabComponent assemblerComponent)
+        public static ProductionDeficitItem FromItem(int itemId, in LabComponent assemblerComponent)
         {
             var recipeId = assemblerComponent.recipeId;
-            _byItemByRecipeId.TryGetValue(itemId, out Dictionary<int, ProductionDeficitItem> byRecipe);
-            if (byRecipe == null)
+            if (!_byItemByRecipeId.TryGetValue(itemId, out var byRecipe))
             {
                 _byItemByRecipeId[itemId] = byRecipe = new Dictionary<int, ProductionDeficitItem>();
             }
 
-            byRecipe.TryGetValue(recipeId, out ProductionDeficitItem value);
-            if (value == null)
+            if (!byRecipe.TryGetValue(recipeId, out ProductionDeficitItem value))
             {
                 value = new ProductionDeficitItem
                 {
@@ -206,7 +201,7 @@ namespace Bottleneck
             Array.Clear(assemblersMissingSprayCount, 0, assemblersMissingSprayCount.Length);
 
             AssemblerCount = 0;
-            jammedCount = 0;
+            JammedCount = 0;
             LackingPowerCount = 0;
         }
 
@@ -214,7 +209,7 @@ namespace Bottleneck
         {
             foreach (var itemId in _byItemByRecipeId.Keys)
             {
-                var productionDeficitItems = ForItemId(itemId);
+                var productionDeficitItems = GetItemsById(itemId);
                 foreach (var deficitItem in productionDeficitItems)
                 {
                     deficitItem.Clear();
@@ -225,14 +220,6 @@ namespace Bottleneck
             {
                 var deficitItem = _byItemOnly[itemId];
                 deficitItem.Clear();
-            }
-        }
-
-        public void AddMissingSpray(int inputItem, int count)
-        {
-            if (inputItemIndex.ContainsKey(inputItem))
-            {
-                assemblersMissingSprayCount[inputItemIndex[inputItem]] += count;                
             }
         }
     }
@@ -247,10 +234,10 @@ namespace Bottleneck
         public static string MostNeeded(int recipeProductId)
         {
             var result = new StringBuilder();
-            var productionDeficitItems = ProductionDeficitItem.ForItemId(recipeProductId);
+            var productionDeficitItems = ProductionDeficitItem.GetItemsById(recipeProductId);
             foreach (var deficitItem in productionDeficitItems)
             {
-                var (neededStr, stackingStr, unpoweredStr, unsprayedStr) = deficitItem.TopNeeded(recipeProductId);
+                var (neededStr, stackingStr, unpoweredStr, unsprayedStr) = deficitItem.GetTopNeeded(recipeProductId);
 
                 if (neededStr.Length == 0 && stackingStr.Length == 0 && unpoweredStr.Length == 0 && unsprayedStr.Length == 0)
                     continue;
@@ -299,14 +286,13 @@ namespace Bottleneck
 
         private static readonly HashSet<int> _loggedLowPowerByPlanetId = new();
 
-        public static void RecordDeficit(int itemId, AssemblerComponent assembler, PlanetFactory planetFactory)
+        public static void RecordDeficit(int itemId, in AssemblerComponent assembler, PlanetFactory planetFactory)
         {
             var maxIncLevel = ResearchTechHelper.GetMaxIncIndex();
             var item = ProductionDeficitItem.FromItem(itemId, assembler);
-            PowerConsumerComponent consumerComponent = planetFactory.powerSystem.consumerPool[assembler.pcId];
-            int networkId = consumerComponent.networkId;
+            var networkId = planetFactory.powerSystem.consumerPool[assembler.pcId].networkId;
             PowerNetwork powerNetwork = planetFactory.powerSystem.netPool[networkId];
-            
+
             float ratio = powerNetwork == null || networkId <= 0 ? 1f : (float)powerNetwork.consumerRatio;
             if (ratio < 0.98f)
             {
@@ -317,7 +303,7 @@ namespace Bottleneck
                     {
                         Log.LogAndPopupMessage($"Planet '{planetFactory.planet.displayName}' low on power");
                         var assemblerPos = planetFactory.entityPool[assembler.entityId].pos;
-                        Maths.GetLatitudeLongitude(assemblerPos, out int latd, out int latf, out int logd, out int logf, 
+                        Maths.GetLatitudeLongitude(assemblerPos, out int latd, out int latf, out int logd, out int logf,
                             out bool north, out bool _, out bool west, out bool _);
                         Log.Warn($"{latd}.{latf} {north}, {logd}.{logf} {west}");
                     }
@@ -348,19 +334,18 @@ namespace Bottleneck
             {
                 if (assembler.produced[i] >= assembler.productCounts[i] * 8)
                 {
-                    item.jammedCount++;
-                    break;                    
+                    item.JammedCount++;
+                    break;
                 }
             }
         }
 
-        public static void RecordDeficit(int itemId, LabComponent lab, PlanetFactory planetFactory)
+        public static void RecordDeficit(int itemId, in LabComponent lab, PlanetFactory planetFactory)
         {
             var maxIncLevel = ResearchTechHelper.GetMaxIncIndex();
             var item = ProductionDeficitItem.FromItem(itemId, lab);
             item.AssemblerCount++;
-            PowerConsumerComponent consumerComponent = planetFactory.powerSystem.consumerPool[lab.pcId];
-            int networkId = consumerComponent.networkId;
+            int networkId = planetFactory.powerSystem.consumerPool[lab.pcId].networkId;
             PowerNetwork powerNetwork = planetFactory.powerSystem.netPool[networkId];
             float ratio = powerNetwork == null || networkId <= 0 ? 1f : (float)powerNetwork.consumerRatio;
             if (ratio < 0.98f)
@@ -396,13 +381,13 @@ namespace Bottleneck
 
             if (lab.time >= lab.timeSpend)
             {
-                item.jammedCount++;
+                item.JammedCount++;
             }
         }
 
         public static bool IsDeficitItemFor(int precursorItem, int targetItem)
         {
-            var productionDeficitItems = ProductionDeficitItem.ForItemId(targetItem);
+            var productionDeficitItems = ProductionDeficitItem.GetItemsById(targetItem);
             // this is a list because there can be a most needed item for each recipe for a target production item
             foreach (var productionDeficitItem in productionDeficitItems)
             {
@@ -416,14 +401,14 @@ namespace Bottleneck
             return false;
         }
 
-        public static void RecordDeficit(int rayReceiverProductId, PowerGeneratorComponent generator, PlanetFactory _)
+        public static void RecordDeficit(int rayReceiverProductId, in PowerGeneratorComponent generator, PlanetFactory _)
         {
             var item = ProductionDeficitItem.FromItem(generator.catalystId, rayReceiverProductId);
             item.AssemblerCount++;
 
             if (generator.productCount > 5)
             {
-                item.jammedCount++;
+                item.JammedCount++;
             }
         }
     }

@@ -843,7 +843,7 @@ namespace Bottleneck
 
             for (int i = 1; i < planetFactory.powerSystem.genCursor; i++)
             {
-                var generator = planetFactory.powerSystem.genPool[i];
+                ref var generator = ref planetFactory.powerSystem.genPool[i];
                 if (generator.id != i) continue;
 
                 if (!planetUsage)
