@@ -1,5 +1,9 @@
 ## Changelog
 
+### v1.1.5
+* Bugfix: Fix theory max consumption of researching lab.  
+* Change: Theory max consumption of spray coaster now use sprayed proliferator.  
+
 ### v1.1.4
 * Bugfix: Fix nebula client doesn't send query when switching tabs.
 * Change: Config `Font Size` default value is set to 26.

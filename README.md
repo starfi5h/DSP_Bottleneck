@@ -134,6 +134,10 @@ Font Size - Value = 26
 * 'Planet Filter' removes non-production (or non-consumption) planets from list when a precursor/consumer item filter is active
 * 'System Filter' when Planet Filter is active add a "Star System" item the list for system with producers  
 * 'Include Second Level Items' when a precursor/consumer item filter is active also include grandparent / grandchild precursor/consumer   
+* 'Overwrite Stacking Level' is used in the calculation of spray coaster theory consumption:  
+For mk3 belt, max cargo infeed speed = 1800(beltRatePerMin) * 4(beltMaxStack) = 7200/min  
+The sprayed mk3 proliferator usage = 7200 / (60+15)(numbersOfSprays) = 96/min  
+In most factory desgins, infeed cargo speed rarely reaches belt limit, so the theory max is often much higher than the real consumption rate.  
 
 ## Notes
 This mod was originally planned as an enhancement to BetterStats by brokenmass. Now this fork continue the work of Semar and adpat to the Dark Fog update in the game.
