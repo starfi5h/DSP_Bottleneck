@@ -289,7 +289,7 @@ namespace Bottleneck
 
             if (!planetUsage)
             {
-                BetterStats.RecordSprayCoaterStats(planetFactory);
+                BetterStats.RecordSprayCoaterStats(planetFactory, maxProductivityIncrease);
             }
             else
             {

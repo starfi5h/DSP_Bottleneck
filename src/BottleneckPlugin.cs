@@ -50,13 +50,11 @@ namespace Bottleneck
             _betterStatsObj = gameObject.AddComponent<BetterStats>();
             Log.Info($"Plugin {PluginInfo.PLUGIN_GUID} {PluginInfo.PLUGIN_VERSION} is loaded!");
 
-            if (Chainloader.PluginInfos.ContainsKey("dsp.nebula-multiplayer"))
-            {
-                NebulaCompat.Init(_harmony);
-            }
+            if (Chainloader.PluginInfos.ContainsKey("dsp.nebula-multiplayer")) NebulaCompat.Init(_harmony);
 
 #if DEBUG
             Strings.ApplyLanguageChange();
+            ResearchTechHelper.RefreshTech();
 #endif
         }
 
@@ -72,7 +70,7 @@ namespace Bottleneck
             _harmony.UnpatchSelf();
             if (_betterStatsObj != null) Destroy(_betterStatsObj);
 
-            NebulaCompat.OnDestroy();
+            if (Chainloader.PluginInfos.ContainsKey("dsp.nebula-multiplayer")) NebulaCompat.OnDestroy();
         }
 #endif
 

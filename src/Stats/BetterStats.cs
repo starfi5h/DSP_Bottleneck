@@ -811,10 +811,10 @@ namespace Bottleneck.Stats
                 RecordGeneratorStats(generator);
             }
 
-            RecordSprayCoaterStats(planetFactory);
+            RecordSprayCoaterStats(planetFactory, maxProductivityIncrease);
         }
 
-        public static void RecordSprayCoaterStats(PlanetFactory planetFactory)
+        public static void RecordSprayCoaterStats(PlanetFactory planetFactory, float maxProductivityIncrease)
         {
             var cargoTraffic = planetFactory.cargoTraffic;
             for (int i = 0; i < planetFactory.cargoTraffic.spraycoaterCursor; i++)
@@ -828,12 +828,14 @@ namespace Bottleneck.Stats
                 // Tooltip for spray lvl 1 shows: "Numbers of sprays = 12", which means that
                 // each spray covers 12 cargos so 360 / 12 = 30 items are covered per minute
                 // (HpMax from proto == Numbers of Sprays)
-                // For now, since we're computing max consumption of the sprays, don't worry about sprays
-                // that are themselves sprayed since that would lead to lower consumption
-                var numbersOfSprays = itemProto.HpMax;
+                // Assume proliferator is already sprayed
+                var numbersOfSprays = (int)(itemProto.HpMax * (1 + maxProductivityIncrease));
 
-                // beltspeed is 1,2,5 so must be multiplied by 6 to get 6,12,30
-                var beltRatePerMin = 6 * beltComponent.speed * 60;
+                // BeltComponent.speed is 1,2,5 so must be multiplied by 6 to get 6,12,30 (cargo/s)
+                // For mk3 belt, max cargo infeed speed = 1800(beltRatePerMin) * 4(beltMaxStack) = 7200/min
+                // The mk3 spray usage = 7200 / (60+15)(numbersOfSprays) = 96/min
+                // Note: Practically infeed speed rarely reach belt limit, so the theory max is often much higher than the real rate
+                var beltRatePerMin = (6 * beltComponent.speed) * 60;
                 int beltMaxStack = ResearchTechHelper.GetMaxPilerStackingUnlocked();
                 var frequency = beltMaxStack * beltRatePerMin / (float)numbersOfSprays;
                 var productId = sprayCoater.incItemId;
@@ -872,11 +874,12 @@ namespace Bottleneck.Stats
             {
                 // In this mode we can't just use lab.timeSpend to figure out how long it takes to consume 1 item (usually a cube)
                 // So, we figure out how many hashes a single cube represents and use the research mode research speed to come up with what is basically a research rate
+                // Note: maxProductivityIncrease only increase the amount of hash upload, it doesn't affect cube consumption rate
                 var techProto = LDB.techs.Select(lab.techId);
                 if (techProto == null)
                     return;
                 TechState techState = GameMain.history.TechState(techProto.ID);
-                float hashPerMinute = (float)(60.0f * (GameMain.data.history.techSpeed * (1.0 + (double)maxProductivityIncrease / 6.0f)));
+                float hashPerMinute = 60.0f * GameMain.data.history.techSpeed;
 
                 for (int index = 0; index < techProto.itemArray.Length; ++index)
                 {

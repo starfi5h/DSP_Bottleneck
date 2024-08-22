@@ -28,7 +28,7 @@ namespace Bottleneck.Stats
             {
                 maxIncIndex = PluginConfig.overwriteProliferatorLevel.Value;
             }
-            else
+            else if (GameMain.history != null)
             {
                 if (GameMain.history.TechUnlocked(1153))
                     maxIncIndex = 4;
