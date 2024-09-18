@@ -595,6 +595,8 @@ namespace Bottleneck.Stats
             int divider = 1;
             bool alertOnLackOfProduction = false;
             bool warnOnHighMaxConsumption = false;
+            bool highlightOnMaxProduction = false;
+            bool highlightOnMaxConsumption = false;
 
             //add values per second
             if (PluginConfig.displayPerSecond.Value)
@@ -611,12 +613,11 @@ namespace Bottleneck.Stats
                 }
             }
 
-            __instance.productUnitLabel.text =
-                __instance.consumeUnitLabel.text = unit;
-            enhancement.maxProductionUnit.text =
-                enhancement.maxConsumptionUnit.text = unitRate;
+            __instance.productUnitLabel.text = __instance.consumeUnitLabel.text = unit;
+            enhancement.maxProductionUnit.text = enhancement.maxConsumptionUnit.text = unitRate;
+            enhancement.maxProductionUnit.color = enhancement.maxConsumptionUnit.color = __instance.productUnitLabel.color;
 
-            if (counter.TryGetValue(__instance.entryData.itemId, out var productMetrics))
+            if (counter.TryGetValue(__instance.entryData.itemId, out var productMetrics) && productMetrics != null)
             {
                 float maxProductValue = productMetrics.production / divider;
                 float maxConsumeValue = productMetrics.consumption / divider;
@@ -631,6 +632,12 @@ namespace Bottleneck.Stats
 
                 if (maxConsumeValue > (maxProductValue * PluginConfig.consumptionToProductionRatioTrigger.Value))
                     warnOnHighMaxConsumption = true;
+
+                if (originalProductValue > maxProductValue * PluginConfig.maximumReachRatioTrigger.Value)
+                    highlightOnMaxProduction = true;
+
+                if (originalConsumeValue > maxConsumeValue * PluginConfig.maximumReachRatioTrigger.Value)
+                    highlightOnMaxConsumption = true;
             }
 
             enhancement.maxProductionValue.text = maxProduction;
@@ -639,14 +646,23 @@ namespace Bottleneck.Stats
             enhancement.counterProductionValue.text = producers;
             enhancement.counterConsumptionValue.text = consumers;
 
-            enhancement.maxProductionValue.color = enhancement.counterProductionValue.color = __instance.productText.color;
-            enhancement.maxConsumptionValue.color = enhancement.counterConsumptionValue.color = __instance.consumeText.color;
+            enhancement.maxProductionValue.color = enhancement.counterProductionValue.color = __instance.productColor;
+            enhancement.maxConsumptionValue.color = enhancement.counterConsumptionValue.color = __instance.consumeColor;
 
-            if (alertOnLackOfProduction && !isTotalTimeWindow)
-                enhancement.maxProductionValue.color = __instance.consumeText.color = new Color(1f, .25f, .25f, .5f);
+            if (!isTotalTimeWindow)
+            {
+                if (alertOnLackOfProduction)
+                    enhancement.maxProductionValue.color = __instance.consumeText.color = new Color(1f, .25f, .25f, .5f);
 
-            if (warnOnHighMaxConsumption && !isTotalTimeWindow)
-                enhancement.maxConsumptionValue.color = new Color(1f, 1f, .25f, .5f);
+                if (warnOnHighMaxConsumption)
+                    enhancement.maxConsumptionValue.color = new Color(1f, 1f, .25f, .5f);
+
+                if (highlightOnMaxProduction)
+                    enhancement.maxProductionUnit.color = __instance.productColor;
+
+                if (highlightOnMaxConsumption)
+                    enhancement.maxConsumptionUnit.color = __instance.consumeColor;
+            }
             enhancement.proliferatorOperationSetting?.UpdateItemId(__instance.entryData.itemId);
         }
 

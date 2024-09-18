@@ -63,7 +63,10 @@ namespace Bottleneck.Nebula
         {
             LastAstroFilter = 0; // local planet
             if (IsClient)
+            {
                 SendRequest(ERequest.Open);
+                SendRequest(ERequest.Bottleneck);
+            }
         }
 
         public static void SendRequest(ERequest request)

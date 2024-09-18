@@ -148,14 +148,13 @@ namespace Bottleneck.Stats
                 // Note: maxProductivityIncrease only increase the amount of hash upload, it doesn't affect cube consumption rate
                 var techProto = LDB.techs.Select(lab.techId);
                 if (techProto == null) return;
-                TechState techState = GameMain.history.TechState(techProto.ID);
                 float hashPerMinute = 60.0f * GameMain.data.history.techSpeed;
 
                 for (int index = 0; index < techProto.itemArray.Length; ++index)
-                {
+                {                    
                     var item = techProto.Items[index];
                     var researchRateSec = (float)GameMain.history.techSpeed * GameMain.tickPerSec;
-                    var researchFreq = (float)(techState.uPointPerHash * hashPerMinute / researchRateSec);
+                    var researchFreq = (float)(techProto.ItemPoints[index] * hashPerMinute / researchRateSec);
                     EnsureId(ref counter, item);
                     counter[item].consumers++;
                     counter[item].consumption += researchFreq * GameMain.history.techSpeed;

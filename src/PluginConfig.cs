@@ -1,4 +1,5 @@
 ﻿using BepInEx.Configuration;
+using UnityEngine;
 
 namespace Bottleneck
 {
@@ -8,6 +9,7 @@ namespace Bottleneck
         public static ConfigEntry<bool> popupLowPowerWarnings;
         public static ConfigEntry<float> lackOfProductionRatioTrigger;
         public static ConfigEntry<float> consumptionToProductionRatioTrigger;
+        public static ConfigEntry<float> maximumReachRatioTrigger;
         public static ConfigEntry<bool> statsOnly;
         public static ConfigEntry<bool> planetFilter;
         public static ConfigEntry<bool> systemFilter;
@@ -38,11 +40,13 @@ namespace Bottleneck
             systemFilter = confFile.Bind("General", "System Filter", true,
                 "When planet filter is active include star systems item in list (requires Planet Filter enabled)");            
             lackOfProductionRatioTrigger = confFile.Bind("General", "lackOfProductionRatio", 1.0f, //
-                "When consumption rises above the given ratio of max production, flag the text in red." +//
+                "When consumption rises above the given ratio of max production, flag both text in red." +//
                 " (e.g. if set to '0.9' then you will be warned if you consume more than 90% of your max production)");
             consumptionToProductionRatioTrigger = confFile.Bind("General", "consumptionToProductionRatio", 1.5f, //
-                "If max consumption raises above the given max production ratio, flag the text in red." +//
+                "If max consumption raises above the given max production ratio, flag the text in yellow." +//
                 " (e.g. if set to '1.5' then you will be warned if your max consumption is more than 150% of your max production)");
+            maximumReachRatioTrigger = confFile.Bind("General", "maximumReachRatio", 0.999f, //
+                "If production or consumption raise above the given theory max ratio, flag the unit text in blue or yellow.");
 
             statsOnly = confFile.Bind("Stats", "Disable Bottleneck", false,
                 "Disable Bottleneck functionality, use only BetterStats features");
