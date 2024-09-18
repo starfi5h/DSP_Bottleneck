@@ -1,5 +1,10 @@
 ## Changelog
 
+### v1.1.6
+* Add: config `maximumReachRatioTrigger`  
+* Bugfix: Fix theory max consumption of researching lab for non-white matrix.  
+* Bugfix: Fix nebula client doesn't send query when opening stats window.  
+
 ### v1.1.5
 * Bugfix: Fix theory max consumption of researching lab.  
 * Change: Theory max consumption of spray coaster now use sprayed proliferator.  

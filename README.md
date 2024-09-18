@@ -78,6 +78,11 @@ lackOfProductionRatio = 1
 # Default value: 1.5
 consumptionToProductionRatio = 1.5
 
+## If production or consumption raise above the given theory max ratio, flag the unit text in blue or yellow.
+# Setting type: Single
+# Default value: 0.999
+maximumReachRatio = 0.999
+
 [Stats]
 
 ## Disable Bottleneck functionality, use only BetterStats features
