@@ -1,5 +1,9 @@
 ## Changelog
 
+### v1.1.7
+* Change: Add theory max calculation for energy exchanger (accumulator, accumulator(full)).  
+* Bugfix: The fuel power generator now calculate the last fuel correctly.  
+
 ### v1.1.6
 * Add: config `maximumReachRatioTrigger`  
 * Bugfix: Fix theory max consumption of researching lab for non-white matrix.  
