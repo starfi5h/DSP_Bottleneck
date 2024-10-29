@@ -148,6 +148,11 @@ namespace Bottleneck
 
             var maxProductivityIncrease = ResearchTechHelper.GetMaxProductivityIncrease();
             var maxSpeedIncrease = ResearchTechHelper.GetMaxSpeedIncrease();
+            if (PluginConfig.disableProliferatorCalc.Value)
+            {
+                maxProductivityIncrease = 0f;
+                maxSpeedIncrease = 0f;
+            }
 
             for (int i = 1; i < factorySystem.assemblerCursor; i++)
             {
@@ -261,7 +266,7 @@ namespace Bottleneck
                 if (!planetUsage)
                     BetterStats.RecordGeneratorStats(generator);
 
-                var isFuelConsumer = generator.fuelHeat > 0 && generator.fuelId > 0 && generator.productId == 0;
+                var isFuelConsumer = generator.curFuelId > 0 && generator.productId == 0;
                 if ((generator.productId == 0 || generator.productHeat == 0) && !isFuelConsumer)
                 {
                     continue;
@@ -270,7 +275,7 @@ namespace Bottleneck
                 if (isFuelConsumer)
                 {
                     // account for fuel consumption by power generator
-                    var productId = generator.fuelId;
+                    var productId = generator.curFuelId;
                     if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet, true);
                 }
                 else
@@ -283,6 +288,29 @@ namespace Bottleneck
                         if (planetUsage) AddPlanetaryUsage(productId, planetFactory.planet);
                         else // this should be critical photons 
                             ProductionDeficit.RecordDeficit(generator.productId, generator, planetFactory);
+                    }
+                }
+            }
+
+            for (int i = 1; i < planetFactory.powerSystem.excCursor; i++)
+            {
+                ref var exchanger = ref planetFactory.powerSystem.excPool[i];
+                if (exchanger.id != i) continue;
+                if (!planetUsage)
+                {
+                    BetterStats.RecordPowerExchangerStats(exchanger, maxSpeedIncrease);
+                }
+                else
+                {
+                    if (exchanger.state == 1.0f) // Input
+                    {
+                        AddPlanetaryUsage(exchanger.fullId, planetFactory.planet);
+                        AddPlanetaryUsage(exchanger.emptyId, planetFactory.planet, true);
+                    }
+                    else if (exchanger.state == -1.0f) // Output
+                    {
+                        AddPlanetaryUsage(exchanger.emptyId, planetFactory.planet);
+                        AddPlanetaryUsage(exchanger.fullId, planetFactory.planet, true);
                     }
                 }
             }

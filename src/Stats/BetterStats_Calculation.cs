@@ -28,6 +28,12 @@ namespace Bottleneck.Stats
             var maxSpeedIncrease = ResearchTechHelper.GetMaxSpeedIncrease();
             int beltMaxStack = ResearchTechHelper.GetMaxPilerStackingUnlocked();
 
+            if (PluginConfig.disableProliferatorCalc.Value)
+            {
+                maxProductivityIncrease = 0f;
+                maxSpeedIncrease = 0f;
+            }
+
             var waterItemId = planetFactory.planet.waterItemId;
             for (int i = 1; i < factorySystem.minerCursor; i++)
             {
@@ -82,6 +88,13 @@ namespace Bottleneck.Stats
                 ref var generator = ref planetFactory.powerSystem.genPool[i];
                 if (generator.id != i) continue;
                 RecordGeneratorStats(generator);
+            }
+
+            for (int i = 1; i < planetFactory.powerSystem.excCursor; i++)
+            {
+                ref var exchanger = ref planetFactory.powerSystem.excPool[i];
+                if (exchanger.id != i) continue;
+                RecordPowerExchangerStats(exchanger, maxSpeedIncrease);
             }
 
             RecordSprayCoaterStats(planetFactory, maxProductivityIncrease);
@@ -202,8 +215,7 @@ namespace Bottleneck.Stats
                 // for whatever reason the belt doesn't have a stacked input so discount back to 30 cargo / s rate 
                 beltMaxStack = 1;
             }
-            var runtimeSetting = PluginConfig.disableProliferatorCalc.Value ?
-                ItemCalculationRuntimeSetting.None : ProliferatorOperationSetting.ForRecipe(115);
+            var runtimeSetting = ProliferatorOperationSetting.ForRecipe(115);
 
             if (runtimeSetting.Enabled)
             {
@@ -235,8 +247,7 @@ namespace Bottleneck.Stats
             var productionFrequency = baseFrequency;
             var speed = (float)(0.0001 * assembler.speed);
 
-            var runtimeSetting = PluginConfig.disableProliferatorCalc.Value ?
-                ItemCalculationRuntimeSetting.None : ProliferatorOperationSetting.ForRecipe(assembler.recipeId);
+            var runtimeSetting = ProliferatorOperationSetting.ForRecipe(assembler.recipeId);
 
             // forceAccMode is 'Production Speedup' mode. It just adds a straight increase to both production and consumption rate
             if (runtimeSetting.Enabled)
@@ -279,18 +290,24 @@ namespace Bottleneck.Stats
 
         public static void RecordGeneratorStats(in PowerGeneratorComponent generator)
         {
-            var isFuelConsumer = generator.fuelHeat > 0 && generator.fuelId > 0 && generator.productId == 0;
-            if ((generator.productId == 0 || generator.productHeat == 0) && !isFuelConsumer) return;
+            var isFuelConsumer = generator.curFuelId > 0 && generator.productId == 0;
 
             if (isFuelConsumer)
             {
                 // account for fuel consumption by power generator
-                var productId = generator.fuelId;
+                var fuelHeat = generator.fuelHeat;
+                if (fuelHeat <= 0L) // fuel item count = 0, burning the last fuel
+                {
+                    fuelHeat = LDB.items.Select(generator.curFuelId)?.HeatValue ?? 0L;
+                    if (fuelHeat == 0L) return; // Should not reach in normal case
+                }
+
+                var productId = generator.curFuelId; // The itemId of fuel that is burning currently
                 EnsureId(ref counter, productId);
-                counter[productId].consumption += 60.0f * TICKS_PER_SEC * generator.useFuelPerTick / generator.fuelHeat;
+                counter[productId].consumption += 60.0f * TICKS_PER_SEC * generator.useFuelPerTick / fuelHeat;
                 counter[productId].consumers++;
             }
-            else
+            else if (generator.productId > 0 && generator.productHeat > 0)
             {
                 var productId = generator.productId;
                 EnsureId(ref counter, productId);
@@ -303,6 +320,30 @@ namespace Bottleneck.Stats
                     counter[generator.catalystId].consumption += RAY_RECEIVER_GRAVITON_LENS_CONSUMPTION_RATE_PER_MIN;
                     counter[generator.catalystId].consumers++;
                 }
+            }
+        }
+
+        public static void RecordPowerExchangerStats(in PowerExchangerComponent powerExchanger, float maxSpeedIncrease)
+        {
+            if (powerExchanger.state == 1.0f) // Input
+            {
+                float rate = (powerExchanger.energyPerTick * (1f + maxSpeedIncrease)) / powerExchanger.maxPoolEnergy;
+                EnsureId(ref counter, powerExchanger.fullId);
+                counter[powerExchanger.fullId].production += 60.0f * TICKS_PER_SEC * rate;
+                counter[powerExchanger.fullId].producers++;
+                EnsureId(ref counter, powerExchanger.emptyId);
+                counter[powerExchanger.emptyId].consumption += 60.0f * TICKS_PER_SEC * rate;
+                counter[powerExchanger.emptyId].consumers++;
+            }
+            else if (powerExchanger.state == -1.0f) // Output
+            {
+                float rate = (powerExchanger.energyPerTick * (1f + maxSpeedIncrease)) / powerExchanger.maxPoolEnergy;
+                EnsureId(ref counter, powerExchanger.emptyId);
+                counter[powerExchanger.emptyId].production += 60.0f * TICKS_PER_SEC * rate;
+                counter[powerExchanger.emptyId].producers++;
+                EnsureId(ref counter, powerExchanger.fullId);
+                counter[powerExchanger.fullId].consumption += 60.0f * TICKS_PER_SEC * rate;
+                counter[powerExchanger.fullId].consumers++;
             }
         }
 
@@ -359,7 +400,7 @@ namespace Bottleneck.Stats
             // when we are in Production Speedup mode `speedOverride` is increased.
             float baseFrequency = 0f, productionFrequency = 0;
 
-            var runtimeSetting = PluginConfig.disableProliferatorCalc.Value ? ItemCalculationRuntimeSetting.None : ProliferatorOperationSetting.ForRecipe(lab.recipeId);
+            var runtimeSetting = ProliferatorOperationSetting.ForRecipe(lab.recipeId);
 
             if (runtimeSetting != null && runtimeSetting.Enabled)
             {

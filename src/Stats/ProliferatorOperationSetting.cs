@@ -351,8 +351,7 @@ namespace Bottleneck.Stats
             }
 
             var recipeProto = LDB.recipes.Select(assemblerRecipeId);
-            if (recipeProto == null)
-                return null;
+            if (recipeProto == null) return ItemCalculationRuntimeSetting.None;
             chosenItemId = recipeProto.Results[0];
             if (recipeProto.Results.Length == 1)
             {
